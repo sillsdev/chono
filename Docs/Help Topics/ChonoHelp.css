@@ -1,0 +1,84 @@
+body
+h4.hint {
+	margin-bottom: 2px;
+}
+p.hint {
+	margin-top: 2px;
+}
+h4.example {
+	margin-top: 2ex;
+	margin-bottom: 0.8ex;
+	margin-left: 2em;
+	background-color: lightgray;
+}
+p.example {
+	margin-bottom: 3px;
+	margin-left: 3.5em;
+}
+.example {
+	margin-top: 0px;
+	margin-bottom: 2px;
+	margin-left: 2em;
+}
+.keyname {
+  font-weight:bold;
+  font-family: "Courier New", Courier, monospace;
+}
+.ui {
+  font-weight:bold;
+}
+.key-name {
+  font-weight:bold;
+}
+.hint {
+  font-style:italic;
+}
+.note {
+  font-style:italic;
+}
+.emphasis {
+  font-style:italic;
+}
+.literal {
+  font-style:italic;
+}
+.note .literal, .hint .literal {
+  font-style:normal;
+}
+.note .emphasis, .hint .emphasis {
+  text-decoration: underline;
+}
+.literal:lang(ml) {
+  font-style:normal;
+}
+.text-to-type {
+  font-family: "Courier New", Courier, monospace;
+  font-style:normal;
+  border: 1px solid green ;
+}
+.frame-placeholder {
+  font-style:underline;
+}
+.material-icons {
+  position: relative;
+  top: 5px;
+  margin-right: 1px;
+}
+ul.icon-list {
+  list-style: none;
+}
+img {
+  margin-left: 3px;
+  margin-top: 5px;
+  margin-right: 3px;
+}
+@font-face {
+    font-family: 'Malayalam';
+    src: url('../fonts/meera.eot');
+    src: url('../fonts/meera.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/meera.woff') format('woff'),
+         url('../fonts/meera.ttf') format('truetype'),
+         url('../fonts/meera.svg#Malayalam') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}

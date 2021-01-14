@@ -1,0 +1,11 @@
+{
+  "project_identifier": "chono",
+  "api_key_env": "CROWDIN_CHONO_KEY",
+  "base_path": ".",
+  "files": [
+    {
+      "source": "Chono.en.xlf",
+      "translation": "%local%/Chono.%locale%.xlf",
+    }
+  ]
+}

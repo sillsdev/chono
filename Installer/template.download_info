@@ -1,0 +1,11 @@
+{
+  "name": "Release Notes",
+  "version": "_VERSION_",
+  "date": "_DATE_",
+  "platform": "win",
+  "platform_version": "",
+  "architecture": "x64",
+  "file": "ChonoInstaller._VERSION_.msi",
+  "type": "msi",
+  "build": ""
+}

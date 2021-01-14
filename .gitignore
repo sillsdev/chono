@@ -1,0 +1,12 @@
+output/
+obj/
+bin/
+packages/
+*.suo
+*.user
+*.pdb
+/.vs
+.nuget/NuGet.exe
+Thumbs.db
+/XLIFF/*
+/CpTxlToP75.bat

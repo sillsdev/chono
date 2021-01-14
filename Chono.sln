@@ -1,0 +1,51 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29409.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomInstallerActions", "Installer\CustomInstallerActions\CustomInstallerActions.csproj", "{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chono", "Chono\Chono.csproj", "{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChonoTests", "Chono\ChonoTests\ChonoTests.csproj", "{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug - Copy To Paratext|x64 = Debug - Copy To Paratext|x64
+		Debug|x64 = Debug|x64
+		Release - Copy To Paratext|x64 = Release - Copy To Paratext|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Debug - Copy To Paratext|x64.ActiveCfg = Debug|x64
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Debug - Copy To Paratext|x64.Build.0 = Debug|x64
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Debug|x64.ActiveCfg = Debug|x64
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Debug|x64.Build.0 = Debug|x64
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Release - Copy To Paratext|x64.ActiveCfg = Release|x64
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Release - Copy To Paratext|x64.Build.0 = Release|x64
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Release|x64.ActiveCfg = Release|x64
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Release|x64.Build.0 = Release|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Debug - Copy To Paratext|x64.ActiveCfg = Debug - Copy To Paratext|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Debug - Copy To Paratext|x64.Build.0 = Debug - Copy To Paratext|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Debug|x64.ActiveCfg = Debug|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Debug|x64.Build.0 = Debug|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Release - Copy To Paratext|x64.ActiveCfg = Release - Copy To Paratext|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Release - Copy To Paratext|x64.Build.0 = Release - Copy To Paratext|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Release|x64.ActiveCfg = Release|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Release|x64.Build.0 = Release|x64
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Debug - Copy To Paratext|x64.ActiveCfg = Debug|x64
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Debug - Copy To Paratext|x64.Build.0 = Debug|x64
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Debug|x64.ActiveCfg = Debug|x64
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Debug|x64.Build.0 = Debug|x64
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Release - Copy To Paratext|x64.ActiveCfg = Release|x64
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Release - Copy To Paratext|x64.Build.0 = Release|x64
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Release|x64.ActiveCfg = Release|x64
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E95F392E-009A-4EEB-B3BA-89BE5D3282D5}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <ProductVersion>1.0</ProductVersion>
+    <ProjectGuid>{F7978340-6AA8-4A53-8DF4-310D2F2FAF70}</ProjectGuid>
+    <SchemaVersion>2.0</SchemaVersion>
+    <OutputName>ChonoInstaller</OutputName>
+    <OutputType>Package</OutputType>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+	<InstallerPlatform>x64</InstallerPlatform>
+    <OutputPath>..\output\installer\</OutputPath>
+    <IntermediateOutputPath>output\wixobj\debug</IntermediateOutputPath>
+    <DefineConstants>Debug</DefineConstants>
+    <AllowIdenticalRows>False</AllowIdenticalRows>
+    <CabinetCachePath>
+    </CabinetCachePath>
+    <CabinetCreationThreadCount>-1</CabinetCreationThreadCount>
+    <Cultures>
+    </Cultures>
+    <LeaveTemporaryFiles>False</LeaveTemporaryFiles>
+    <LinkerPedantic>False</LinkerPedantic>
+    <ReuseCabinetCache>False</ReuseCabinetCache>
+    <SetMsiAssemblyNameFileVersion>False</SetMsiAssemblyNameFileVersion>
+    <SuppressAclReset>False</SuppressAclReset>
+    <SuppressAssemblies>False</SuppressAssemblies>
+    <SuppressDefaultAdminSequenceActions>False</SuppressDefaultAdminSequenceActions>
+    <SuppressDefaultAdvSequenceActions>False</SuppressDefaultAdvSequenceActions>
+    <SuppressDefaultUISequenceActions>False</SuppressDefaultUISequenceActions>
+    <SuppressDroppingUnrealTables>False</SuppressDroppingUnrealTables>
+    <SuppressFileHashAndInfo>False</SuppressFileHashAndInfo>
+    <SuppressFiles>False</SuppressFiles>
+    <SuppressIces>
+    </SuppressIces>
+    <LinkerSuppressIntermediateFileVersionMatching>False</LinkerSuppressIntermediateFileVersionMatching>
+    <SuppressLayout>False</SuppressLayout>
+    <SuppressMsiAssemblyTableProcessing>False</SuppressMsiAssemblyTableProcessing>
+    <LinkerSuppressSchemaValidation>False</LinkerSuppressSchemaValidation>
+    <LinkerSuppressSpecificWarnings>
+    </LinkerSuppressSpecificWarnings>
+    <SuppressValidation>False</SuppressValidation>
+    <LinkerTreatWarningsAsErrors>False</LinkerTreatWarningsAsErrors>
+    <LinkerVerboseOutput>False</LinkerVerboseOutput>
+    <WixVariables>
+    </WixVariables>
+    <IncludeSearchPaths>
+    </IncludeSearchPaths>
+    <Pedantic>False</Pedantic>
+    <ShowSourceTrace>False</ShowSourceTrace>
+    <SuppressSchemaValidation>False</SuppressSchemaValidation>
+    <SuppressSpecificWarnings>
+    </SuppressSpecificWarnings>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <VerboseOutput>False</VerboseOutput>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputPath>..\output\installer\</OutputPath>
+    <IntermediateOutputPath>output\wixobj\release</IntermediateOutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+    <SuppressIces>ICE30</SuppressIces>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Installer.wxs" />
+	<Compile Include="..\output\installer\GeneratedDocFilesP9.wxs">
+      <Link>GeneratedDocFilesP9.wxs</Link>
+    </Compile>
+	<Compile Include="..\output\installer\GeneratedDocFilesP9Beta.wxs">
+      <Link>GeneratedDocFilesP9Beta.wxs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <WixExtension Include="WixUtilExtension">
+      <HintPath>..\..\..\Program Files\WiX Toolset v3.7\bin\WixUtilExtension.dll</HintPath>
+      <Name>WixUtilExtension</Name>
+    </WixExtension>
+    <WixExtension Include="WixUIExtension">
+      <HintPath>..\..\..\Program Files\WiX Toolset v3.7\bin\WixUIExtension.dll</HintPath>
+      <Name>WixUIExtension</Name>
+    </WixExtension>
+    <WixExtension Include="WixNetFxExtension">
+      <HintPath>..\..\..\Program Files\WiX Toolset v3.7\bin\WixNetFxExtension.dll</HintPath>
+      <Name>WixNetFxExtension</Name>
+    </WixExtension>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets" />
+</Project>

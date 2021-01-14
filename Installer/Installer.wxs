@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- These variables define the Windows Installer product version, product code and upgrade code. They   -->
+<!-- will be used later on in this file.  this value should be B U I L D_SCRIPT_MUST_REPLACE_AT_RUNTIME (in quotes) -->
+<?define Property_ProductVersion = "BUILD_SCRIPT_MUST_REPLACE_AT_RUNTIME" ?>
+
+<!-- * means auto-generate a new guid each time. This is "a unique identifier for the particular product release" -->
+<?define Property_ProductCode = "*" ?>
+
+<!--Don't even think of EVER changing this, despite the counter-intuitive name. What it is: "a shared identifier that represents multiple versions of an application" -->
+<?define Property_UpgradeCode = "{3FB732F0-C0AB-4AD4-83F6-D794834D76B5}" ?>
+
+<!-- good intro to the component vs. file thing, and why each file here is a separate component:
+http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
+
+    <Product Id="$(var.Property_ProductCode)" Name="Chono $(var.Property_ProductVersion)" Language="1033"
+             Version="$(var.Property_ProductVersion)" Manufacturer="SIL International"
+             UpgradeCode="$(var.Property_UpgradeCode)">
+
+        <Package Platform="x64" Compressed="yes" InstallerVersion="200" Manufacturer="SIL International" InstallScope="perMachine" />
+
+        <MajorUpgrade Schedule="afterInstallInitialize"
+                      DowngradeErrorMessage="A later version of Chono is already installed. If you really want to downgrade, first uninstall Chono, then do this install again." />
+
+        <!-- show the license page -->
+        <UIRef Id="WixUI_FeatureTree" />
+        <!-- Top banner / 493 × 58 -->
+        <WixVariable Id='WixUIBannerBmp' Value='installerBanner.jpg' />
+        <!-- Background bitmap used on the welcome and completion dialogs / 493 × 312 -->
+        <WixVariable Id='WixUIDialogBmp' Value='installerBackground.jpg' />
+        <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+
+        <!-- 
+    "from the list: Don't use Advertise="yes" Advertised shortcuts are designed to allow
+    users to install just the shortcut for your app, then demand-install the
+    rest of the app the first time the icon is run.  If this is not behavior you
+    are trying to support, you're better off using non-advertised shortcuts. "-->
+
+        <Property Id="PARATEXT9" Secure="yes">
+			<RegistrySearch Win64="no"
+							Id="Paratext9"
+                            Root="HKLM"
+                            Key="SOFTWARE\Paratext\8"
+                            Name="Paratext9_Full_Release_AppPath"
+                            Type="directory" />
+        </Property>
+        <Property Id="PARATEXT9BETA" Secure="yes">
+            <RegistrySearch Win64="no"
+							Id="Paratext9Beta"
+							Root="HKLM"
+                            Key="SOFTWARE\Paratext\8"
+                            Name="Program_Files_Directory_Ptw91"
+                            Type="directory" />
+        </Property>
+		<!-- TODO: When Paratext 9.2 is released with the actual plugin stuff Chono needs, check to ensure correct version is installed. -->
+        <Condition Message="To install Chono, you need to install Paratext 9.2 or later.">
+            <![CDATA[Installed OR PARATEXT9BETA OR PARATEXT9]]>
+        </Condition>
+				
+		<Property Id="UPDATEP9PLUGINCACHE" Secure="yes">
+            <DirectorySearch Id="Paratext9PluginCacheExeExists" Path="[PARATEXT9]">
+                <FileSearch Name="UpdateParatextPluginCache.exe"/>
+            </DirectorySearch>
+        </Property>
+
+		<Property Id="UPDATEP9BETAPLUGINCACHE" Secure="yes">
+            <DirectorySearch Id="Paratext9BetaPluginCacheExeExists" Path="[PARATEXT9BETA]">
+                <FileSearch Name="UpdateParatextPluginCache.exe"/>
+            </DirectorySearch>
+        </Property>
+		
+		<!-- This is extremely unlikely... -->
+        <Condition Message="Paratext is not installed properly. Missing required file: UpdateParatextPluginCache.exe. Re-run the Paratext Installer to repair the installation. Then re-run the Chono Installer.">
+            <![CDATA[Installed OR
+			(PARATEXT9 AND UPDATEP9PLUGINCACHE) OR
+			(PARATEXT9BETA AND UPDATEP9BETAPLUGINCACHE)]]>
+        </Condition>
+		
+        <Binary Id="CustomInstallerActions.CA.dll"
+                SourceFile="CustomInstallerActions/bin/x64/Release/CustomInstallerActions.CA.dll" />
+
+        <CustomAction Id="RemoveAllChonoUserCacheFiles"
+                      Return="asyncWait"
+                      Execute="deferred"
+                      Impersonate="no"
+                      BinaryKey="CustomInstallerActions.CA.dll"
+                      DllEntry="RemoveAllChonoUserCacheFiles" />
+
+        <Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFiles64Folder" Name="PFiles">
+				<Directory Id="PARATEXT9" Name="ParatextDir9">
+					<Directory Id="PLUGINDIR9" Name="plugins">
+						<Directory Id="INSTALLDIR9" Name="Chono">
+							<Directory Id="INSTALLDIR9_LOCALIZATION" Name="localization"/>
+							<Directory Id="DocsDirP9" Name="docs"/>
+						</Directory>
+					</Directory>
+				</Directory>
+				<Directory Id="PARATEXT9BETA" Name="ParatextDir9Beta">
+					<Directory Id="PLUGINDIR9BETA" Name="plugins">
+						<Directory Id="INSTALLDIR9BETA" Name="Chono">
+							<Directory Id="INSTALLDIR9BETA_LOCALIZATION" Name="localization"/>
+							<Directory Id="DocsDirP9Beta" Name="docs"/>
+						</Directory>
+					</Directory>
+				</Directory>
+			</Directory>
+        </Directory>
+
+        <ComponentGroup Id="COMPONENTSFORP9PLUGIN" Directory="INSTALLDIR9" Source="..\Chono\bin\x64\Release">
+            <Component Guid="*">
+                <File Id="Chono.dll_P9" ShortName="x6bjjpu5.dll" KeyPath="yes" Name="Chono.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="Analytics.NET.dll_P9" ShortName="t9a1cxl9.dll" KeyPath="yes" Name="Analytics.NET.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="DesktopAnalytics.dll_P9" ShortName="avcjefr2.dll" KeyPath="yes" Name="DesktopAnalytics.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="Newtonsoft.Json.dll_P9" ShortName="malr336y.dll" KeyPath="yes" Name="Newtonsoft.Json.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="L10NSharp.dll_P9" ShortName="apdq6l10.dll" KeyPath="yes"
+                      Name="L10NSharp.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="SIL.WritingSystems.dll_P9" ShortName="u3wozlbp.dll" KeyPath="yes"
+                      Name="SIL.WritingSystems.dll" />
+            </Component>
+			<!-- ICU and dependencies - Could make these conditional if no localizations are installed.
+				But the code would also need to be made to handle the case of no icu.net.dll (by catching
+				exception?)-->
+			<Component Guid="*">
+				<File Id="icu.net.dll_P9" ShortName="icunetp9.dll" KeyPath="yes" Name="icu.net.dll" />
+			</Component>			
+			<Component Guid="*">
+				<File Id="Microsoft.Extensions.DependencyModel.dll_P9" ShortName="msedmp9.dll" KeyPath="yes" Name="Microsoft.Extensions.DependencyModel.dll"/>
+			</Component>
+			<Component Guid="*">
+				<File Id="icudt62.dll_86_P9" ShortName="dt62p9.dll" KeyPath="yes" Source="..\Chono\bin\x64\Release\lib\win-x64\icudt62.dll" />
+			</Component>
+			<Component Guid="*">
+				<File Id="icuin62.dll_86_P9" ShortName="in62p9.dll" KeyPath="yes" Source="..\Chono\bin\x64\Release\lib\win-x64\icuin62.dll" />
+			</Component>
+			<Component Guid="*">
+				<File Id="icuuc62.dll_86_P9" ShortName="uc62p9.dll" KeyPath="yes" Source="..\Chono\bin\x64\Release\lib\win-x64\icuuc62.dll" />
+			</Component>
+			<!-- End ICU -->
+            <Component Guid="*">
+                <File Id="SIL.Windows.Forms.Keyboarding.dll_P9" ShortName="tp04hoif.dll" KeyPath="yes"
+                      Name="SIL.Windows.Forms.Keyboarding.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="SIL.Windows.Forms.Scripture.dll_P9" ShortName="avbbno1j.dll" KeyPath="yes"
+                      Name="SIL.Windows.Forms.Scripture.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="SIL.Scripture.dll_P9" ShortName="hq9z3a0z.dll" KeyPath="yes" Name="SIL.Scripture.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="SIL.Windows.Forms.dll_P9" ShortName="6cm4n2mk.dll" KeyPath="yes" Name="SIL.Windows.Forms.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="SIL.Core.dll_P9" ShortName="fqfi7v4n.dll" KeyPath="yes" Name="SIL.Core.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="SIL.Core.Desktop.dll_P9" ShortName="3ibsrrdb.dll" KeyPath="yes" Name="SIL.Core.Desktop.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="Chono.pdb_P9" ShortName="8o1biihw.pdb" KeyPath="yes" Name="Chono.pdb" />
+            </Component>
+            <Component Guid="*">
+                <File Id="Icon_P9" ShortName="44tpy8ze.ico" KeyPath="yes" Name="TXL no TXL.ico" />
+            </Component>
+            <Component Guid="*">
+                <File Id="CreditsAndLicense.htm_P9" ShortName="qgigfgzl.htm" KeyPath="yes" Name="CreditsAndLicense.htm" />
+            </Component>
+            <Component Id="Chono.dll.config_P9" Guid="*">
+                <File Id="Chono.dll.config_P9" ShortName="abh9z0kp.cfg" KeyPath="yes"
+                      Name="Chono.dll.config" />
+            </Component>
+            <Component Id="ReleaseNotes.md_P9" Guid="*">
+                <File Id="ReleaseNotes.md_P9" ShortName="p0rdflid.md" Source="..\DistFiles\ReleaseNotes.md" />
+            </Component>
+        </ComponentGroup>
+
+        <ComponentGroup Id="COMPONENTSFORP9PLUGINLOCALIZATION_es" Directory="INSTALLDIR9_LOCALIZATION"
+                        Source="..\DistFiles\localization">
+            <Component Id="Chono.es.xlf_P9" Guid="*">
+                <File Id="Chono.es.xlf_P9" ShortName="esp9.xlf" KeyPath="yes" Name="Chono.es.xlf" />
+            </Component>
+        </ComponentGroup>
+
+        <ComponentGroup Id="COMPONENTSFORP9BetaPLUGIN" Directory="INSTALLDIR9BETA"
+                        Source="..\Chono\bin\x64\Release">
+            <Component Guid="*">
+                <File Id="Chono.dll_P9Beta" ShortName="9fsib2cv.dll" KeyPath="yes" Name="Chono.dll" />
+            </Component>
+
+            <Component Guid="*">
+                <File Id="Analytics.NET.dll_P9Beta" ShortName="pt3ei4z5.dll" KeyPath="yes" Name="Analytics.NET.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="DesktopAnalytics.dll_P9Beta" ShortName="mcmisnhb.dll" KeyPath="yes"
+                      Name="DesktopAnalytics.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="Newtonsoft.Json.dll_P9Beta" ShortName="2yd4aev9.dll" KeyPath="yes" Name="Newtonsoft.Json.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="L10NSharp.dll_P9Beta" ShortName="qywkwk5r.dll" KeyPath="yes"
+                      Name="L10NSharp.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="SIL.WritingSystems.dll_P9Beta" ShortName="0dmsdv4y.dll" KeyPath="yes"
+                      Name="SIL.WritingSystems.dll" />
+            </Component>
+			<!-- ICU and dependencies - Could make these conditional if no localizations are installed.
+				But the code would also need to be made to handle the case of no icu.net.dll (by catching
+				exception?)-->
+			<Component Guid="*">
+				<File Id="icu.net.dll_P9Beta" ShortName="icunet7t.dll" KeyPath="yes" Name="icu.net.dll" />
+			</Component>
+			<Component Guid="*">
+				<File Id="Microsoft.Extensions.DependencyModel.dll_P9Beta" ShortName="msedmp7t.dll" KeyPath="yes" Name="Microsoft.Extensions.DependencyModel.dll"/>
+			</Component>
+			<Component Guid="*">
+				<File Id="icudt62.dll_86_P9Beta" ShortName="dt62p7t.dll" KeyPath="yes" Source="..\Chono\bin\x64\Release\lib\win-x64\icudt62.dll" />
+			</Component>
+			<Component Guid="*">
+				<File Id="icuin62.dll_86_P9Beta" ShortName="in62p7t.dll" KeyPath="yes" Source="..\Chono\bin\x64\Release\lib\win-x64\icuin62.dll" />
+			</Component>
+			<Component Guid="*">
+				<File Id="icuuc62.dll_86_P9Beta" ShortName="uc62p7t.dll" KeyPath="yes" Source="..\Chono\bin\x64\Release\lib\win-x64\icuuc62.dll" />
+			</Component>
+			<!-- End ICU -->
+            <Component Guid="*">
+                <File Id="SIL.Windows.Forms.Keyboarding.dll_P9Beta" ShortName="ww6bl0mp.dll" KeyPath="yes"
+                      Name="SIL.Windows.Forms.Keyboarding.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="SIL.Windows.Forms.Scripture.dll_P9Beta" ShortName="7wglaoxs.dll" KeyPath="yes"
+                      Name="SIL.Windows.Forms.Scripture.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="SIL.Scripture.dll_P9Beta" ShortName="qpybzotc.dll" KeyPath="yes" Name="SIL.Scripture.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="SIL.Windows.Forms.dll_P9Beta" ShortName="5j3m7jap.dll" KeyPath="yes"
+                      Name="SIL.Windows.Forms.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="SIL.Core.dll_P9Beta" ShortName="yifsuyy7.dll" KeyPath="yes" Name="SIL.Core.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="SIL.Core.Desktop.dll_P9Beta" ShortName="q3763bq8.dll" KeyPath="yes"
+                      Name="SIL.Core.Desktop.dll" />
+            </Component>
+            <Component Guid="*">
+                <File Id="Chono.pdb_P9Beta" ShortName="4ut3f5jb.pdb" KeyPath="yes" Name="Chono.pdb" />
+            </Component>
+            <Component Guid="{bb48a596-a43f-47f0-b6c9-fd125d18096f}">
+                <File Id="Icon_P9Beta" ShortName="fihp0pz8.ico" KeyPath="yes" Name="TXL no TXL.ico" />
+            </Component>
+            <Component Guid="*">
+                <File Id="CreditsAndLicense.htm_P9Beta" ShortName="2gd8uwk5.htm" KeyPath="yes"
+                      Name="CreditsAndLicense.htm" />
+            </Component>
+            <Component Id="Chono.dll.config_P9Beta" Guid="*">
+                <File Id="Chono.dll.config_P9Beta" ShortName="eemr572z.cfg" KeyPath="yes"
+                      Name="Chono.dll.config" />
+            </Component>
+            <Component Id="ReleaseNotes.md_P9Beta" Guid="*">
+                <File Id="ReleaseNotes.md_P9Beta" ShortName="eqghs9lt.md" Source="..\DistFiles\ReleaseNotes.md" />
+            </Component>
+        </ComponentGroup>
+
+        <ComponentGroup Id="COMPONENTSFORP9BetaPLUGINLOCALIZATION_es" Directory="INSTALLDIR9BETA_LOCALIZATION"
+                        Source="..\DistFiles\localization">
+            <Component Id="Chono.es.xlf_P9Beta" Guid="*">
+                <File Id="Chono.es.xlf_P9Beta" ShortName="esp9beta.xlf" KeyPath="yes" Name="Chono.es.xlf" />
+            </Component>
+        </ComponentGroup>
+
+        <ComponentGroup Id="COMPONENTSFORP9BetaPLUGINLOCALIZATION_fr" Directory="INSTALLDIR9BETA_LOCALIZATION"
+                        Source="..\DistFiles\localization">
+            <Component Id="Chono.fr.xlf_P9Beta" Guid="*">
+                <File Id="Chono.fr.xlf_P9Beta" ShortName="frp8.xlf" KeyPath="yes" Name="Chono.fr.xlf" />
+            </Component>
+        </ComponentGroup>
+
+        <Feature Id="PluginFeature_P9" Level="0" Title="Plugin for Paratext 9" AllowAdvertise="no">
+            <Condition Level="1"><![CDATA[PARATEXT9 AND UPDATEP9PLUGINCACHE]]></Condition>
+            <ComponentGroupRef Id="COMPONENTSFORP9PLUGIN" />
+			<Component Id="CreateP9LocalizationFolder" Directory="INSTALLDIR9_LOCALIZATION" Guid="{F77F30B5-FF0A-401C-A8CF-C9AEF00B1348}">
+				<CreateFolder />
+			</Component>
+            <Feature Id="Localization_P9" Level="1" Title="Localizations" InstallDefault="followParent"
+                     AllowAdvertise="no">
+                <Feature Id="Localization_P9_es" Level="1" Title="español" InstallDefault="followParent"
+                         AllowAdvertise="no">
+                    <ComponentGroupRef Id="COMPONENTSFORP9PLUGINLOCALIZATION_es" />
+                </Feature>
+                <Feature Id="Localization_P9_fr" Level="1" Title="français" InstallDefault="followParent"
+                         AllowAdvertise="no">
+                    <ComponentGroupRef Id="COMPONENTSFORP9PLUGINLOCALIZATION_fr" />
+                </Feature>
+            </Feature>
+			<Feature Id="Documentation_P9" Level="1" Title="Documentation" InstallDefault="followParent"
+                     AllowAdvertise="no">
+                <ComponentGroupRef Id="COMPONENTSFORP9Documentation_en" />
+            </Feature>
+        </Feature>
+
+        <Feature Id="PluginFeature_P9Beta" Level="0" Title="Plugin for Paratext 9 Beta" AllowAdvertise="no">
+            <Condition Level="1"><![CDATA[PARATEXT9BETA AND UPDATEP9BETAPLUGINCACHE]]></Condition>
+            <ComponentGroupRef Id="COMPONENTSFORP9BetaPLUGIN" />
+			<Component Id="CreateP9BetaLocalizationFolder" Directory="INSTALLDIR9BETA_LOCALIZATION" Guid="{78076F21-D334-4081-9F94-1D809A5278A8}">
+				<CreateFolder />
+			</Component>
+            <Feature Id="Localization_P9Beta" Level="1" Title="Localizations" InstallDefault="followParent"
+                     AllowAdvertise="no">
+                <Feature Id="Localization_P9Beta_es" Level="1" Title="español" InstallDefault="followParent"
+                         AllowAdvertise="no">
+                    <ComponentGroupRef Id="COMPONENTSFORP9BetaPLUGINLOCALIZATION_es" />
+                </Feature>
+                <Feature Id="Localization_P9Beta_fr" Level="1" Title="français" InstallDefault="followParent"
+                         AllowAdvertise="no">
+					<ComponentGroupRef Id="COMPONENTSFORP9BetaPLUGINLOCALIZATION_fr" />
+                </Feature>
+            </Feature>
+			<Feature Id="Documentation_P9Beta" Level="1" Title="Documentation" InstallDefault="followParent"
+                     AllowAdvertise="no">
+                <ComponentGroupRef Id="COMPONENTSFORP9BetaDocumentation_en" />
+            </Feature>
+        </Feature>
+
+        <CustomAction Id="SetUpdatePluginStore_P9" Property="UpdatePluginStore_P9"
+                      Value="&quot;[PARATEXT9]UpdateParatextPluginCache.exe&quot;" Execute="immediate" Return="check" />
+        <CustomAction Id="SetUpdatePluginStore_P9Beta" Property="UpdatePluginStore_P9Beta"
+                      Value="&quot;[PARATEXT9BETA]UpdateParatextPluginCache.exe&quot;" Execute="immediate"
+                      Return="check" />
+
+        <CustomAction Id="SetUpdatePluginStore_P9_Failsafe" Property="UpdatePluginStore_P9_Failsafe"
+                      Value="&quot;[PARATEXT9]UpdateParatextPluginCache.exe&quot;" Execute="immediate" Return="check" />
+        <CustomAction Id="SetUpdatePluginStore_P9Beta_Failsafe" Property="UpdatePluginStore_P9Beta_Failsafe"
+                      Value="&quot;[PARATEXT9BETA]UpdateParatextPluginCache.exe&quot;" Execute="immediate"
+                      Return="check" />
+					  
+        <CustomAction Id="UpdatePluginStore_P9" BinaryKey="WixCA" DllEntry="CAQuietExec" Impersonate="no"
+                      Execute="deferred" Return="check" />
+        <CustomAction Id="UpdatePluginStore_P9Beta" BinaryKey="WixCA" DllEntry="CAQuietExec" Impersonate="no"
+                      Execute="deferred" Return="check" />
+
+        <CustomAction Id="UpdatePluginStore_P9_Failsafe" BinaryKey="WixCA" DllEntry="CAQuietExec" Impersonate="no"
+                      Execute="deferred" Return="asyncWait" />
+        <CustomAction Id="UpdatePluginStore_P9Beta_Failsafe" BinaryKey="WixCA" DllEntry="CAQuietExec" Impersonate="no"
+                      Execute="deferred" Return="asyncWait" />
+					  
+		<!-- INSTALLSTATE_LOCAL = 3 -->
+		<!-- INSTALLSTATE_ABSENT = 2 -->
+        <InstallExecuteSequence>
+            <Custom Action="RemoveAllChonoUserCacheFiles" After="RemoveRegistryValues"></Custom>
+
+			<!-- Sequencing of the failsafe and non-failsafe versions of the actions is arbitrary since their
+			conditions are mutually exclusive. -->
+			
+            <Custom Action="UpdatePluginStore_P9" Before="InstallFinalize">
+                <![CDATA[&PluginFeature_P9=3]]>
+            </Custom>
+            <Custom Action="UpdatePluginStore_P9_Failsafe" Before="InstallFinalize">
+                <![CDATA[(NOT UPGRADINGPRODUCTCODE) AND (&PluginFeature_P9=2) AND UPDATEP9PLUGINCACHE AND (!PluginFeature_P9=3)]]>
+            </Custom>
+            <Custom Action="SetUpdatePluginStore_P9" Before="UpdatePluginStore_P9">
+                <![CDATA[&PluginFeature_P9=3]]>
+            </Custom>
+            <Custom Action="SetUpdatePluginStore_P9_Failsafe" Before="UpdatePluginStore_P9_Failsafe">
+                <![CDATA[(NOT UPGRADINGPRODUCTCODE) AND (&PluginFeature_P9=2) AND UPDATEP9PLUGINCACHE AND (!PluginFeature_P9=3)]]>
+            </Custom>
+			
+			<Custom Action="UpdatePluginStore_P9Beta" Before="InstallFinalize">
+                <![CDATA[&PluginFeature_P9Beta=3]]>
+            </Custom>
+            <Custom Action="UpdatePluginStore_P9Beta_Failsafe" Before="InstallFinalize">
+                <![CDATA[(NOT UPGRADINGPRODUCTCODE) AND (&PluginFeature_P9Beta=2) AND UPDATEP9BETAPLUGINCACHE AND (!PluginFeature_P9Beta=3)]]>
+            </Custom>
+            <Custom Action="SetUpdatePluginStore_P9Beta" Before="UpdatePluginStore_P9Beta">
+                <![CDATA[&PluginFeature_P9Beta=3]]>
+            </Custom>
+            <Custom Action="SetUpdatePluginStore_P9Beta_Failsafe" Before="UpdatePluginStore_P9Beta_Failsafe">
+                <![CDATA[(NOT UPGRADINGPRODUCTCODE) AND (&PluginFeature_P9Beta=2) AND UPDATEP9BETAPLUGINCACHE AND (!PluginFeature_P9Beta=3)]]>
+            </Custom>
+        </InstallExecuteSequence>
+
+        <Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
+
+        <!-- Icon you see in add/remove programs control panel -->
+        <Icon Id="Chono.ico" SourceFile="..\Chono\bin\x64\Release\Chono.dll" />
+        <Property Id="ARPPRODUCTICON" Value="Chono.ico" />
+    </Product>
+</Wix>
+

@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "Installer", "Installer.wixproj", "{801C7C6D-2A50-4387-A373-55FD61AD2997}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4D7BC38F-7C37-4531-AD8B-1156C83680A4}.Debug|x64.ActiveCfg = Debug|x64
+		{4D7BC38F-7C37-4531-AD8B-1156C83680A4}.Debug|x64.Build.0 = Debug|x64
+		{4D7BC38F-7C37-4531-AD8B-1156C83680A4}.Release|x64.ActiveCfg = Release|x64
+		{4D7BC38F-7C37-4531-AD8B-1156C83680A4}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
