@@ -76,6 +76,9 @@
 		<!-- The two extensions are required to show the tests on TC -->
 		<Exec Command='$(NuGetCommand) install NUnit.Extension.NUnitProjectLoader -excludeVersion -version 3.6.0 -solutionDirectory "$(RootDir)"' />
 		<Exec Command='$(NuGetCommand) install NUnit.Extension.TeamCityEventListener -excludeVersion -version 1.0.7 -solutionDirectory "$(RootDir)"' />
+
+		<MSBuild Projects="$(MSBuildProjectFullPath)" Targets="BuildInternal"
+		  Properties="Configuration=$(Configuration)" Condition="$(RestartBuild)" />
     </Target>
 
 	<Target Name="SetAssemblyVersion" DependsOnTargets="VersionNumbers">
