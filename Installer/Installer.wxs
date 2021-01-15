@@ -172,7 +172,7 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
                 <File Id="Chono.pdb_P9" ShortName="8o1biihw.pdb" KeyPath="yes" Name="Chono.pdb" />
             </Component>
             <Component Guid="*">
-                <File Id="Icon_P9" ShortName="44tpy8ze.ico" KeyPath="yes" Name="TXL no TXL.ico" />
+                <File Id="Icon_P9" ShortName="44tpy8ze.ico" KeyPath="yes" Name="Chono.ico" />
             </Component>
             <Component Guid="*">
                 <File Id="CreditsAndLicense.htm_P9" ShortName="qgigfgzl.htm" KeyPath="yes" Name="CreditsAndLicense.htm" />
@@ -190,6 +190,13 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
                         Source="..\DistFiles\localization">
             <Component Id="Chono.es.xlf_P9" Guid="*">
                 <File Id="Chono.es.xlf_P9" ShortName="esp9.xlf" KeyPath="yes" Name="Chono.es.xlf" />
+            </Component>
+        </ComponentGroup>
+
+        <ComponentGroup Id="COMPONENTSFORP9PLUGINLOCALIZATION_fr" Directory="INSTALLDIR9_LOCALIZATION"
+                        Source="..\DistFiles\localization">
+            <Component Id="Chono.fr.xlf_P9" Guid="*">
+                <File Id="Chono.fr.xlf_P9" ShortName="frp9.xlf" KeyPath="yes" Name="Chono.fr.xlf" />
             </Component>
         </ComponentGroup>
 
@@ -262,7 +269,7 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
                 <File Id="Chono.pdb_P9Beta" ShortName="4ut3f5jb.pdb" KeyPath="yes" Name="Chono.pdb" />
             </Component>
             <Component Guid="{bb48a596-a43f-47f0-b6c9-fd125d18096f}">
-                <File Id="Icon_P9Beta" ShortName="fihp0pz8.ico" KeyPath="yes" Name="TXL no TXL.ico" />
+                <File Id="Icon_P9Beta" ShortName="fihp0pz8.ico" KeyPath="yes" Name="Chono.ico" />
             </Component>
             <Component Guid="*">
                 <File Id="CreditsAndLicense.htm_P9Beta" ShortName="2gd8uwk5.htm" KeyPath="yes"

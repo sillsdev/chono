@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--This file is generated and then updated by an MSBuild task.  It preserves the automatically-generated guids assigned files that will be installed on user machines. So it should be held in source control.-->
+<InstallerMetadata>
+  <File Id="DocsDirP9Beta.ChonoHelp.css" Guid="5763cfbd-55b6-4abf-8c89-6447bcbfca4b" />
+  <File Id="DocsDirP9Beta.Home.htm" Guid="f6717ab8-5a5b-457c-8306-fabcb2be07ac" />
+  <File Id="DocsDirP9.ChonoHelp.css" Guid="02368198-64ab-4b34-9a83-4ecc88f763a4" />
+  <File Id="DocsDirP9.Home.htm" Guid="8fffe690-843e-40bf-99c2-988bab8c21b2" />
+</InstallerMetadata>
