@@ -45,7 +45,7 @@ namespace SIL.Chono
 			m_lblCopyright.Text = Format(LocalizationManager.GetString("ChonoInfo.CopyrightFmt",
 					"{0}. Distributable under the terms of the MIT License.",
 					"Param is copyright information. This is displayed in the Help/About box and the splash screen"),
-				m_lblCopyright.Text.Replace("(C)", "©"));
+				m_lblCopyright.Text.UseCopyrightSymbol());
 
 			string version = assembly.GetName().Version.ToString();
 			m_lblAppVersion.Text = Format(m_lblAppVersion.Text, version);

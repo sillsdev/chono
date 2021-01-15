@@ -271,6 +271,7 @@
       <DependentUpon>IdentifySpeaker.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StringExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="HelpAboutDlg.resx">

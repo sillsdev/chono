@@ -231,6 +231,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="StringExtensionsTests.cs" />
     <Compile Include="TestScrVers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
