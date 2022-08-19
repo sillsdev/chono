@@ -76,7 +76,7 @@ namespace SIL.Chono
 			get
 			{
 				var entry = new PluginAnnotationMenuEntry(GetHighlightQuotationsMenuName(),
-					proj => new AnnotationSource(proj), @"highlightquotes.png");
+					proj => new AnnotationSource(m_host, proj), @"highlightquotes.png");
 
 				entry.LocalizedTextNeeded += (defaultText, locale) =>
 					GetHighlightQuotationsMenuName(locale);
