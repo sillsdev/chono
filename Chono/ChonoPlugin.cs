@@ -1,196 +1,63 @@
 ﻿// ---------------------------------------------------------------------------------------------
-#region // Copyright (c) 2021, SIL International.   
-// <copyright from='2021' to='2021' company='SIL International'>
-//		Copyright (c) 2021, SIL International.   
+#region // Copyright (c) 2022, SIL International.   
+// <copyright from='2021' to='2022' company='SIL International'>
+//		Copyright (c) 2022, SIL International.   
 //
 //		Distributable under the terms of the MIT License (http://sil.mit-license.org/)
 // </copyright> 
 #endregion
 // ---------------------------------------------------------------------------------------------
 using System;
-using System.AddIn;
-using System.AddIn.Pipeline;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Windows.Forms;
-using AddInSideViews;
 using DesktopAnalytics;
 using L10NSharp;
-using SIL.IO;
-using SIL.Keyboarding;
+using Paratext.PluginInterfaces;
 using SIL.Reporting;
-using SIL.Scripture;
-using SIL.Windows.Forms.Keyboarding;
+using SIL.Windows.Forms.LocalizationIncompleteDlg;
 using SIL.Windows.Forms.Reporting;
+using static System.String;
 
 namespace SIL.Chono
 {
-	[AddIn(kPluginName, Description = "Helps apply Glyssen biblical character names to quotes",
-		Version = "0.1", Publisher = "SIL International")]
-	[QualificationData(PluginMetaDataKeys.menuText, kPluginName + "...")]
-	[QualificationData(PluginMetaDataKeys.insertAfterMenuName, "Tools|Custom tools")]
-	[QualificationData(PluginMetaDataKeys.menuImagePath, @"Chono\chono.ico")]
-	[QualificationData(PluginMetaDataKeys.enableWhen, WhenToEnable.scriptureProjectActive)]
-    [QualificationData(PluginMetaDataKeys.multipleInstances, CreateInstanceRule.forEachActiveProject)]
-	public class ChonoPlugin : IParatextAddIn2
+	public class ChonoPlugin : IParatextScrTextAnnotationPlugin, IParatextWindowPlugin
 	{
 		public const string kPluginName = "Chono";
+		public const string kDefaultUILocale = "en";
+
 		// TODO: Set up project-specific email (unless we want to keep this under Glyssen?)
 		private const string kEmailAddress = "glyssen-support_lsdev@sil.org";
-		private const string kEnglishVersificationName = "English";
-	    private SplashScreen m_splashScreen;
-		private IdentifySpeaker m_unsMainWindow;
-		private IHost host;
-		private string projectName;
+		private readonly IPluginHost m_host;
+		private readonly string m_company;
+		private readonly string m_baseInstallFolder;
+		//private static Analytics s_analytics;
 
-		public void RequestShutdown()
+		internal static LocalizationIncompleteViewModel LocIncompleteViewModel { get; private set; }
+		internal static ILocalizationManager PrimaryLocalizationManager => LocIncompleteViewModel.PrimaryLocalizationManager;
+
+		public string Name => kPluginName;
+		public Version Version { get; }
+		public string VersionString => Version.ToString();
+		public string Publisher => "SIL International";
+
+		public ChonoPlugin(IPluginHost host)
 		{
-		    lock (this)
-		    {
-		        if (m_unsMainWindow != null)
-		        {
-		            InvokeOnUiThread(delegate
-		                {
-		                    m_unsMainWindow.Activate();
-		                    m_unsMainWindow.Close();
-		                });
-		        }
-		        else
-                    Environment.Exit(0);
-		    }
-		}
+			m_host = host;
+			var assembly = Assembly.GetExecutingAssembly();
+			m_baseInstallFolder = Path.GetDirectoryName(assembly.Location);
+			InitializeErrorHandling(ChonoInfo.GetBuildDate(assembly));
+			Version = assembly.GetName().Version;
+			var attributes = assembly.GetCustomAttributes(typeof(AssemblyCompanyAttribute), false);
+			m_company = attributes.Length == 0 ? "SIL" : ((AssemblyCompanyAttribute)attributes[0]).Company;
 
-		public Dictionary<string, IPluginDataFileMergeInfo> DataFileKeySpecifications => null;
-
-		public void Activate(string activeProjectName)
-	    {
-            if (m_unsMainWindow != null)
-	        {
-	            lock (this)
-	            {
-	                InvokeOnUiThread(delegate { m_unsMainWindow.Activate(); });
-	            }
-	        }
-            else
-            {
-                // Can't lock because the whole start-up sequence takes several seconds and the
-                // whole point of this code is to activate the splash screen so the user can see
-                // it's still starting up. But there is no harm in calling Activate on the splash
-                // screen if we happen to catch it between the time it is closed and the member
-                // variable is set to null, since in that case, the "real" splash screen is closed
-                // and Activate is a no-op. But we do need to use a temp variable because it could
-                // get set to null between the time we check for null and the call to Activate.
-                SplashScreen tempSplashScreen = m_splashScreen;
-				tempSplashScreen?.Activate();
-			}
-	    }
-
-	    public void Run(IHost ptHost, string activeProjectName)
-		{
-            lock (this)
-            {
-                if (host != null)
-                {
-                    // This should never happen, but just in case Host does something wrong...
-                    ptHost.WriteLineToLog(this, "Run called more than once!");
-                    return;
-                }
-            }
-
-			try
-			{
-				Application.EnableVisualStyles();
-
-				host = ptHost;
-				projectName = activeProjectName;
-#if DEBUG
-				MessageBox.Show("Attach debugger now (if you want to)", kPluginName);
-#endif
-				ptHost.WriteLineToLog(this, "Starting " + kPluginName);
-
-				string preferredUiLocale = "en";
-				try
-				{
-					preferredUiLocale = host.GetApplicationSetting("InterfaceLanguageId");
-					if (String.IsNullOrWhiteSpace(preferredUiLocale))
-						preferredUiLocale = "en";
-				}
-				catch (Exception)
-				{
-				}
-
-				SetUpLocalization(preferredUiLocale);
-
-				Thread mainUIThread = new Thread(() =>
-				{
-					InitializeErrorHandling(projectName);
-
-					IdentifySpeaker formToShow;
-					lock (this)
-					{
-						m_splashScreen = new SplashScreen();
-					    m_splashScreen.Show(Screen.FromPoint(Properties.Settings.Default.WindowLocation));
-						m_splashScreen.Message = string.Format(
-						    LocalizationManager.GetString("SplashScreen.MsgRetrievingDataFromCaller",
-							    "Retrieving data from {0}...", "Param is host application name (Paratext)"),
-						    host.ApplicationName);
-
-						int currentRef = host.GetCurrentRef(kEnglishVersificationName);
-						BCVRef startRef = new BCVRef(currentRef);
-						BCVRef endRef = new BCVRef(currentRef);
-                        startRef.Chapter = 1;
-                        startRef.Verse = 1;
-                        endRef.Chapter = host.GetLastChapter(endRef.Book, kEnglishVersificationName);
-                        endRef.Verse = host.GetLastVerse(endRef.Book, endRef.Chapter, kEnglishVersificationName);
-
-						KeyboardController.Initialize();
-
-						Action<bool> activateKeyboard = vern =>
-						{
-							if (vern)
-							{
-								try
-								{
-									string keyboard = host.GetProjectKeyboard(projectName);
-									if (!string.IsNullOrEmpty(keyboard))
-										Keyboard.Controller.GetKeyboard(keyboard).Activate();
-
-								}
-								catch (ApplicationException e)
-								{
-									// For some reason, the very first time this gets called it throws a COM exception, wrapped as
-									// an ApplicationException. Mysteriously, it seems to work just fine anyway, and then all subsequent
-									// calls work with no exception. Paratext seems to make this same call without any exceptions. The
-									// documentation for ITfInputProcessorProfiles.ChangeCurrentLanguage (which is the method call
-									// in SIL.Windows.Forms.Keyboarding.Windows that throws the COM exception says that an E_FAIL is an
-									// unspecified error, so that's fairly helpful.
-									if (!(e.InnerException is COMException))
-										throw;
-								}
-							}
-							else
-								Keyboard.Controller.ActivateDefaultKeyboard();
-						};
-
-						formToShow = m_unsMainWindow = new IdentifySpeaker(m_splashScreen, projectName,
-							host.GetProjectFont(projectName),
-						    host.GetProjectLanguageId(projectName, "generate templates"),
-							host.GetProjectSetting(projectName, "Language"), host.GetProjectRtoL(projectName),
-						    host.GetScriptureExtractor(projectName, ExtractorType.USFX), host.ApplicationName,
-							new ScrVers(host, kEnglishVersificationName),
-							new ScrVers(host, host.GetProjectVersificationName(projectName)),
-							startRef, endRef, activateKeyboard, preferredUiLocale);
-					    m_splashScreen = null;
-					}
-
+			// TODO set up analytics for Chono
 //#if DEBUG
-//                    // Always track if this is a debug build, but track to a different segment.io project
-//                    const bool allowTracking = true;
-//                    const string key = "0mtsix4obm";
+//			// Always track if this is a debug build, but track to a different segment.io project
+//			const bool allowTracking = true;
+//			const string key = "0mtsix4obm";
 //#else
 //                    // If this is a release build, then allow an environment variable to be set to false
 //                    // so that testers aren't generating false analytics
@@ -200,34 +67,55 @@ namespace SIL.Chono
 
 //                    const string key = "3iuv313n8t";
 //#endif
-//					using (new Analytics(key, GetUserInfo(), allowTracking))
-//					{
-//						Analytics.Track("Startup", new Dictionary<string, string>
-//						{{"Specific version", Assembly.GetExecutingAssembly().GetName().Version.ToString()}});
 
-						formToShow.ShowDialog();
-//					}
-					ptHost.WriteLineToLog(this, "Closing " + kPluginName);
-					Environment.Exit(0);
-				});
-				mainUIThread.Name = kPluginName;
-				mainUIThread.IsBackground = false;
-				mainUIThread.SetApartmentState(ApartmentState.STA);
-				mainUIThread.Start();
-				// Avoid putting any code after this line. Any exceptions thrown will not be able to be reported via the
-				// "green screen" because we are not running in STA.
-			}
-			catch (Exception e)
+			SetUpLocalization();
+		}
+
+		public IEnumerable<PluginAnnotationMenuEntry> PluginAnnotationMenuEntries
+		{
+			get
 			{
-				MessageBox.Show(string.Format(LocalizationManager.GetString("General.ErrorStarting", "Error occurred attempting to start {0}: ",
-					"Param is \"Chono\" (plugin name)"), kPluginName) + e.Message);
-				throw;
+				var entry = new PluginAnnotationMenuEntry(GetHighlightQuotationsMenuName(),
+					proj => new AnnotationSource(proj), @"highlightquotes.png");
+
+				entry.LocalizedTextNeeded += (defaultText, locale) =>
+					GetHighlightQuotationsMenuName(locale);
+			
+				yield return entry;
 			}
+		}
+
+		public IEnumerable<WindowPluginMenuEntry> PluginMenuEntries
+		{
+			get
+			{
+				var entry = new WindowPluginMenuEntry(GetShowSpeakersMenuName(),
+					ShowSpeakersMenuClicked, PluginMenuLocation.ScrTextTools);
+
+				entry.LocalizedTextNeeded += (defaultText, locale) =>
+					GetShowSpeakersMenuName(locale);
+			
+				yield return entry;
+			}
+		}
+
+		public void ShowSpeakersMenuClicked(IWindowPluginHost host, IParatextChildState state)
+		{
+			host.ShowEmbeddedUi(new ShowSpeakersControl(), state.Project);
+
+						//int currentRef = host.GetCurrentRef(kEnglishVersificationName);
+						//BCVRef startRef = new BCVRef(currentRef);
+						//BCVRef endRef = new BCVRef(currentRef);
+      //                  startRef.Chapter = 1;
+      //                  startRef.Verse = 1;
+      //                  endRef.Chapter = host.GetLastChapter(endRef.Book, kEnglishVersificationName);
+      //                  endRef.Verse = host.GetLastVerse(endRef.Book, endRef.Chapter, kEnglishVersificationName);
+
 		}
 
 		private UserInfo GetUserInfo()
 		{
-			string lastName = host.UserName;
+			string lastName = m_host.UserInfo.Name;
 			string firstName = "";
 			if (lastName != null)
 			{
@@ -240,51 +128,104 @@ namespace SIL.Chono
 					lastName = lastName.Substring(split + 1);
 				}
 			}
-			//return new UserInfo { FirstName = firstName, LastName = lastName, UILanguageCode = LocalizationManager.UILanguageId, Email = emailAddress };
-			// TODO: Enhance plugin API to get access to e-mail address
-			return new UserInfo { FirstName = firstName, LastName = lastName, UILanguageCode = "en"};
+			return new UserInfo { FirstName = firstName, LastName = lastName,
+				UILanguageCode = LocalizationManager.UILanguageId};
 		}
 
-		private void InvokeOnUiThread(Action action)
+		private void SetUpLocalization()
 		{
-		    lock (this)
-		    {
-		        if (m_unsMainWindow.InvokeRequired)
-		            m_unsMainWindow.Invoke(action);
-		        else
-		            action();
-		    }
+			string desiredUiLangId = kDefaultUILocale;
+			try
+			{
+				desiredUiLangId = m_host.UserSettings.UiLocale;
+				if (IsNullOrWhiteSpace(desiredUiLangId))
+					desiredUiLangId = kDefaultUILocale;
+			}
+			catch (Exception)
+			{
+			}
+
+			var installedStringFileFolder = Path.Combine(m_baseInstallFolder, "localization");
+			var relativeSettingPathForLocalizationFolder = Path.Combine(m_company, kPluginName);
+			var icon = new Icon(GetFileDistributedWithApplication("chono.ico"));
+
+			// ENHANCE (L10nSharp): Not sure what the best way is to deal with this: the desired UI
+			// language might be available in the XLIFF files for one of the localization managers
+			// but not the other. Normally, part of the creation process for a LM is to check to
+			// see whether the requested language is available. But if the first LM we create does
+			// not have the requested language, the user sees a dialog box alerting them to that
+			// and requiring them to choose a different language. For now, in Chono, we
+			// can work around that by creating the Palaso LM first, since its set of available
+			// languages is a superset of the languages available for Chono. But it feels weird
+			// not to create the primary LM first, and the day could come where neither set of
+			// languages is a superset, and then this strategy wouldn't work.
+			LocalizationManager.Create(TranslationMemory.XLiff,
+				desiredUiLangId, "Palaso", "SIL Shared Strings", VersionString, installedStringFileFolder,
+				relativeSettingPathForLocalizationFolder, icon, kEmailAddress,
+				"SIL.Windows.Forms.Reporting");
+
+			var primaryMgr = LocalizationManager.Create(TranslationMemory.XLiff, 
+				desiredUiLangId, kPluginName, kPluginName, VersionString, installedStringFileFolder,
+				relativeSettingPathForLocalizationFolder, icon, kEmailAddress,
+				"SIL.Chono", "SIL.Utils");
+
+			LocIncompleteViewModel = new LocalizationIncompleteViewModel(primaryMgr, "chono",
+				IssueRequestForLocalization);
 		}
 
-		private void InitializeErrorHandling(string projectName)
+		private static void IssueRequestForLocalization()
+		{
+			Analytics.Track("UI language request", LocIncompleteViewModel.StandardAnalyticsInfo);
+		}
+
+		public string GetFileDistributedWithApplication(params string[] partsOfTheSubPath)
+		{
+			var path = partsOfTheSubPath.Aggregate(m_baseInstallFolder, Path.Combine);
+
+			if (File.Exists(path))
+				return path;
+
+			throw new ApplicationException("Could not locate the required file, " + path);
+		}
+
+		public string GetDescription(string locale)
+		{
+			return LocalizationManager.GetString("Chono.Description",
+				"Helps apply Glyssen biblical character names to quotes",
+				"This will be requested using the current Paratext UI locale",
+				new [] {locale, LocalizationManager.UILanguageId}, out _);
+		}
+
+		public string GetHighlightQuotationsMenuName(string locale = null)
+		{
+			return LocalizationManager.GetString("Chono.HighlightQuoteLevelsMenu",
+				"Highlight quotation levels", null, GetLocalesToRequest(locale), out _);
+		}
+
+		public string GetShowSpeakersMenuName(string locale = null)
+		{
+			return LocalizationManager.GetString("Chono.ShowWhoSpeaksInVerseMenu",
+				"Show speaking characters", null, GetLocalesToRequest(locale), out _);
+		}
+
+		private string[] GetLocalesToRequest(string locale)
+		{
+			return (locale != null && locale != LocalizationManager.UILanguageId) ?
+				new[] { locale, LocalizationManager.UILanguageId } :
+				new[] { LocalizationManager.UILanguageId };
+		}
+
+		private void InitializeErrorHandling(string buildDate)
 		{
 			ErrorReport.SetErrorReporter(new WinFormsErrorReporter());
 			ErrorReport.EmailAddress = kEmailAddress;
 			ErrorReport.AddStandardProperties();
-			// The version that gets added to the report by default is for the entry assembly, which is
-			// AddInProcess32.exe. Even if if reported a version (which it doesn't), it wouldn't be very
-			// useful.
 			ErrorReport.AddProperty("Plugin Name", kPluginName);
-			Assembly assembly = Assembly.GetExecutingAssembly();
-			ErrorReport.AddProperty("Version", string.Format("{0} (apparent build date: {1})",
-				assembly.GetName().Version,
-				File.GetLastWriteTime(assembly.Location).ToShortDateString()));
-			ErrorReport.AddProperty("Host Application", host.ApplicationName + " " + host.ApplicationVersion);
-			ErrorReport.AddProperty("Project Name", projectName);
-			ExceptionHandler.Init(new WinFormsExceptionHandler());
+			ErrorReport.AddProperty("Version", $"{Version} (apparent build date: {buildDate})");
+			ErrorReport.AddProperty("Host Application", m_host.ApplicationName + " " + m_host.ApplicationVersion);
+			ExceptionHandler.Init(new WinFormsExceptionHandler(false));
 		}
-		
-		private static void SetUpLocalization(string desiredUiLangId)
-		{
-			var assembly = Assembly.GetExecutingAssembly();
-			var attributes = assembly.GetCustomAttributes(typeof(AssemblyCompanyAttribute), false);
-			var company = attributes.Length == 0 ? "SIL" : ((AssemblyCompanyAttribute)attributes[0]).Company;
-			var installedStringFileFolder = FileLocationUtilities.GetDirectoryDistributedWithApplication("localization");
-			var relativeSettingPathForLocalizationFolder = Path.Combine(company, kPluginName);
-			var version = assembly.GetName().Version.ToString();
-			LocalizationManager.Create(TranslationMemory.XLiff, desiredUiLangId, kPluginName, kPluginName, version,
-				installedStringFileFolder, relativeSettingPathForLocalizationFolder, new Icon(FileLocationUtilities.GetFileDistributedWithApplication("chono.ico")), kEmailAddress,
-				"SIL.Chono", "SIL.Utils");
-		}
+
+		public IDataFileMerger GetMerger(IPluginHost host, string dataIdentifier) => null;
 	}
 }

@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------------------------
-#region // Copyright (c) 2021, SIL International.
-// <copyright from='2021' to='2021' company='SIL International'>
-//		Copyright (c) 2021, SIL International.
+#region // Copyright (c) 2022, SIL International.
+// <copyright from='2021' to='2022' company='SIL International'>
+//		Copyright (c) 2022, SIL International.
 //
 //		Distributable under the terms of the MIT License (http://sil.mit-license.org/)
 // </copyright>
@@ -26,6 +26,8 @@ namespace SIL.Chono
 	public partial class ChonoInfo : UserControl
 	{
 		private WebBrowser browserCreditsAndLicense;
+		private string m_version; 
+		private string m_buildDate; 
 
 		/// ------------------------------------------------------------------------------------
 		/// <summary>
@@ -44,13 +46,31 @@ namespace SIL.Chono
 				m_lblCopyright.Text = ((AssemblyCopyrightAttribute) attributes[0]).Copyright;
 			m_lblCopyright.Text = Format(LocalizationManager.GetString("ChonoInfo.CopyrightFmt",
 					"{0}. Distributable under the terms of the MIT License.",
-					"Param is copyright information. This is displayed in the Help/About box and the splash screen"),
+					"Param is copyright information. This is displayed in the Help/About box"),
 				m_lblCopyright.Text.UseCopyrightSymbol());
 
-			string version = assembly.GetName().Version.ToString();
-			m_lblAppVersion.Text = Format(m_lblAppVersion.Text, version);
-			lblBuildDate.Text = Format(lblBuildDate.Text,
-				File.GetLastWriteTime(assembly.Location).ToShortDateString());
+			m_version = assembly.GetName().Version.ToString();
+			FormatAppVersion(m_lblAppVersion, EventArgs.Empty);
+			m_lblAppVersion.TextChanged += FormatAppVersion;
+
+			m_buildDate = GetBuildDate(assembly);
+			FormatBuildDate(m_lblBuildDate, EventArgs.Empty);
+			m_lblBuildDate.TextChanged += FormatBuildDate;
+		}
+
+		internal static string GetBuildDate(Assembly assembly) =>
+			File.GetLastWriteTime(assembly.Location).ToShortDateString();
+
+		private void FormatAppVersion(object sender, EventArgs args)
+		{
+			if (m_lblAppVersion.Text.Contains("{0}"))
+				m_lblAppVersion.Text = Format(m_lblAppVersion.Text, m_version);
+		}
+
+		private void FormatBuildDate(object sender, EventArgs args)
+		{
+			if (m_lblBuildDate.Text.Contains("{0}"))
+				m_lblBuildDate.Text = Format(m_lblBuildDate.Text, m_buildDate);
 		}
 
 		/// ------------------------------------------------------------------------------------

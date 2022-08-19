@@ -1,7 +1,7 @@
 ﻿// ---------------------------------------------------------------------------------------------
-#region // Copyright (c) 2021, SIL International.   
-// <copyright from='2021' to='2021 company='SIL International'>
-//		Copyright (c) 2021, SIL International.   
+#region // Copyright (c) 2022, SIL International.   
+// <copyright from='2021' to='2022 company='SIL International'>
+//		Copyright (c) 2022, SIL International.   
 //
 //		Distributable under the terms of the MIT License (http://sil.mit-license.org/)
 // </copyright> 
@@ -29,8 +29,11 @@ namespace SIL.Chono
 			LocalizeItemDlg<XLiffDocument>.StringsLocalized += HandleStringsLocalized;
 		}
 
-		private void HandleStringsLocalized()
+		private void HandleStringsLocalized(ILocalizationManager lm = null)
 		{
+			if (lm != null && lm != ChonoPlugin.PrimaryLocalizationManager)
+				return;
+
 			m_linkLabelAddDisplayLanguageUsingInstaller.Text =
 				Format(m_linkLabelAddDisplayLanguageUsingInstaller.Text,
 					m_displayLanguageMenu.Text.Replace("&", "")) + " ";

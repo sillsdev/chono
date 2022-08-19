@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29409.12
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32804.467
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomInstallerActions", "Installer\CustomInstallerActions\CustomInstallerActions.csproj", "{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}"
 EndProject
@@ -9,38 +9,88 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chono", "Chono\Chono.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChonoTests", "Chono\ChonoTests\ChonoTests.csproj", "{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}"
 EndProject
+Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "Paratext", "..\Paratext\Output\Debug\Paratext.exe", "{F8C6A7BA-DA8B-435F-AAFF-2A9B696CFB48}"
+	ProjectSection(DebuggerProjectSystem) = preProject
+		PortSupplier = 00000000-0000-0000-0000-000000000000
+		Executable = C:\Projects\Paratext\Output\Debug\Paratext.exe
+		RemoteMachine = DESKTOP-0URHRIP
+		StartingDirectory = C:\Projects\Paratext\Output\Debug
+		Environment = Default
+		LaunchingEngine = 00000000-0000-0000-0000-000000000000
+		UseLegacyDebugEngines = No
+		LaunchSQLEngine = No
+		AttachLaunchAction = No
+		IORedirection = Auto
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug - Copy To Paratext|Any CPU = Debug - Copy To Paratext|Any CPU
 		Debug - Copy To Paratext|x64 = Debug - Copy To Paratext|x64
+		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
+		Release - Copy To Paratext|Any CPU = Release - Copy To Paratext|Any CPU
 		Release - Copy To Paratext|x64 = Release - Copy To Paratext|x64
+		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Debug - Copy To Paratext|Any CPU.ActiveCfg = Debug|x64
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Debug - Copy To Paratext|Any CPU.Build.0 = Debug|x64
 		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Debug - Copy To Paratext|x64.ActiveCfg = Debug|x64
 		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Debug - Copy To Paratext|x64.Build.0 = Debug|x64
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Debug|Any CPU.Build.0 = Debug|x64
 		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Debug|x64.ActiveCfg = Debug|x64
 		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Debug|x64.Build.0 = Debug|x64
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Release - Copy To Paratext|Any CPU.ActiveCfg = Release|x64
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Release - Copy To Paratext|Any CPU.Build.0 = Release|x64
 		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Release - Copy To Paratext|x64.ActiveCfg = Release|x64
 		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Release - Copy To Paratext|x64.Build.0 = Release|x64
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Release|Any CPU.ActiveCfg = Release|x64
+		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Release|Any CPU.Build.0 = Release|x64
 		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Release|x64.ActiveCfg = Release|x64
 		{D5CF7D63-5DE2-450A-B1AF-3A6FC0459508}.Release|x64.Build.0 = Release|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Debug - Copy To Paratext|Any CPU.ActiveCfg = Debug - Copy To Paratext|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Debug - Copy To Paratext|Any CPU.Build.0 = Debug - Copy To Paratext|x64
 		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Debug - Copy To Paratext|x64.ActiveCfg = Debug - Copy To Paratext|x64
 		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Debug - Copy To Paratext|x64.Build.0 = Debug - Copy To Paratext|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Debug|Any CPU.Build.0 = Debug|x64
 		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Debug|x64.ActiveCfg = Debug|x64
 		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Debug|x64.Build.0 = Debug|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Release - Copy To Paratext|Any CPU.ActiveCfg = Release - Copy To Paratext|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Release - Copy To Paratext|Any CPU.Build.0 = Release - Copy To Paratext|x64
 		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Release - Copy To Paratext|x64.ActiveCfg = Release - Copy To Paratext|x64
 		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Release - Copy To Paratext|x64.Build.0 = Release - Copy To Paratext|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Release|Any CPU.ActiveCfg = Release|x64
+		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Release|Any CPU.Build.0 = Release|x64
 		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Release|x64.ActiveCfg = Release|x64
 		{3A4BF2AF-23B5-487E-BEA5-5D65A0A01BF7}.Release|x64.Build.0 = Release|x64
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Debug - Copy To Paratext|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Debug - Copy To Paratext|Any CPU.Build.0 = Debug|Any CPU
 		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Debug - Copy To Paratext|x64.ActiveCfg = Debug|x64
 		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Debug - Copy To Paratext|x64.Build.0 = Debug|x64
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Debug|x64.ActiveCfg = Debug|x64
 		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Debug|x64.Build.0 = Debug|x64
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Release - Copy To Paratext|Any CPU.ActiveCfg = Release|Any CPU
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Release - Copy To Paratext|Any CPU.Build.0 = Release|Any CPU
 		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Release - Copy To Paratext|x64.ActiveCfg = Release|x64
 		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Release - Copy To Paratext|x64.Build.0 = Release|x64
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Release|x64.ActiveCfg = Release|x64
 		{DB5B6E93-353D-4C21-92F1-F9BF83F173E4}.Release|x64.Build.0 = Release|x64
+		{F8C6A7BA-DA8B-435F-AAFF-2A9B696CFB48}.Debug - Copy To Paratext|Any CPU.ActiveCfg = Release|Any CPU
+		{F8C6A7BA-DA8B-435F-AAFF-2A9B696CFB48}.Debug - Copy To Paratext|x64.ActiveCfg = Release|Any CPU
+		{F8C6A7BA-DA8B-435F-AAFF-2A9B696CFB48}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{F8C6A7BA-DA8B-435F-AAFF-2A9B696CFB48}.Debug|x64.ActiveCfg = Release|Any CPU
+		{F8C6A7BA-DA8B-435F-AAFF-2A9B696CFB48}.Release - Copy To Paratext|Any CPU.ActiveCfg = Release|Any CPU
+		{F8C6A7BA-DA8B-435F-AAFF-2A9B696CFB48}.Release - Copy To Paratext|x64.ActiveCfg = Release|Any CPU
+		{F8C6A7BA-DA8B-435F-AAFF-2A9B696CFB48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8C6A7BA-DA8B-435F-AAFF-2A9B696CFB48}.Release|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
