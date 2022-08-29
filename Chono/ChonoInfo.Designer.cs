@@ -36,7 +36,7 @@ namespace SIL.Chono
 			this.m_lblCopyright = new System.Windows.Forms.Label();
 			this.m_picLogo = new System.Windows.Forms.PictureBox();
 			this.tableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
-			this.lblBuildDate = new System.Windows.Forms.Label();
+			this.m_lblBuildDate = new System.Windows.Forms.Label();
 			this.panelBrowser = new System.Windows.Forms.Panel();
 			this.l10NSharpExtender1 = new L10NSharp.UI.L10NSharpExtender(this.components);
 			lblProductName = new System.Windows.Forms.Label();
@@ -114,12 +114,13 @@ namespace SIL.Chono
 			this.m_lblCopyright.ForeColor = System.Drawing.Color.Black;
 			this.l10NSharpExtender1.SetLocalizableToolTip(this.m_lblCopyright, null);
 			this.l10NSharpExtender1.SetLocalizationComment(this.m_lblCopyright, null);
+			this.l10NSharpExtender1.SetLocalizationPriority(this.m_lblCopyright, L10NSharp.LocalizationPriority.NotLocalizable);
 			this.l10NSharpExtender1.SetLocalizingId(this.m_lblCopyright, "ChonoInfo.m_lblCopyright");
 			this.m_lblCopyright.Location = new System.Drawing.Point(386, 105);
 			this.m_lblCopyright.Name = "m_lblCopyright";
 			this.m_lblCopyright.Size = new System.Drawing.Size(175, 119);
 			this.m_lblCopyright.TabIndex = 20;
-			this.m_lblCopyright.Text = "(C) 2021, SIL International.";
+			this.m_lblCopyright.Text = "(C) 2022, SIL International.";
 			this.m_lblCopyright.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 			// 
 			// m_picLogo
@@ -148,7 +149,7 @@ namespace SIL.Chono
 			this.tableLayoutPanel.Controls.Add(this.m_lblAppVersion, 1, 1);
 			this.tableLayoutPanel.Controls.Add(this.m_lblCopyright, 1, 3);
 			this.tableLayoutPanel.Controls.Add(this.pictLogo, 2, 3);
-			this.tableLayoutPanel.Controls.Add(this.lblBuildDate, 1, 2);
+			this.tableLayoutPanel.Controls.Add(this.m_lblBuildDate, 1, 2);
 			this.tableLayoutPanel.Controls.Add(this.panelBrowser, 1, 4);
 			this.tableLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.tableLayoutPanel.Location = new System.Drawing.Point(0, 0);
@@ -163,22 +164,21 @@ namespace SIL.Chono
 			this.tableLayoutPanel.Size = new System.Drawing.Size(671, 368);
 			this.tableLayoutPanel.TabIndex = 27;
 			// 
-			// lblBuildDate
+			// m_lblBuildDate
 			// 
-			this.lblBuildDate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblBuildDate.AutoSize = true;
-			this.tableLayoutPanel.SetColumnSpan(this.lblBuildDate, 2);
-			this.l10NSharpExtender1.SetLocalizableToolTip(this.lblBuildDate, null);
-			this.l10NSharpExtender1.SetLocalizationComment(this.lblBuildDate, null);
-			this.l10NSharpExtender1.SetLocalizationPriority(this.lblBuildDate, L10NSharp.LocalizationPriority.NotLocalizable);
-			this.l10NSharpExtender1.SetLocalizingId(this.lblBuildDate, "ChonoInfo.lblBuildDate");
-			this.lblBuildDate.Location = new System.Drawing.Point(386, 85);
-			this.lblBuildDate.Name = "lblBuildDate";
-			this.lblBuildDate.Padding = new System.Windows.Forms.Padding(0, 0, 0, 6);
-			this.lblBuildDate.Size = new System.Drawing.Size(282, 19);
-			this.lblBuildDate.TabIndex = 28;
-			this.lblBuildDate.Text = "Built on: {0}";
-			this.lblBuildDate.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+			this.m_lblBuildDate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+			this.m_lblBuildDate.AutoSize = true;
+			this.tableLayoutPanel.SetColumnSpan(this.m_lblBuildDate, 2);
+			this.l10NSharpExtender1.SetLocalizableToolTip(this.m_lblBuildDate, null);
+			this.l10NSharpExtender1.SetLocalizationComment(this.m_lblBuildDate, null);
+			this.l10NSharpExtender1.SetLocalizingId(this.m_lblBuildDate, "ChonoInfo.m_lblBuildDate");
+			this.m_lblBuildDate.Location = new System.Drawing.Point(386, 85);
+			this.m_lblBuildDate.Name = "m_lblBuildDate";
+			this.m_lblBuildDate.Padding = new System.Windows.Forms.Padding(0, 0, 0, 6);
+			this.m_lblBuildDate.Size = new System.Drawing.Size(282, 19);
+			this.m_lblBuildDate.TabIndex = 28;
+			this.m_lblBuildDate.Text = "Built on: {0}";
+			this.m_lblBuildDate.TextAlign = System.Drawing.ContentAlignment.TopCenter;
 			// 
 			// panelBrowser
 			// 
@@ -224,7 +224,7 @@ namespace SIL.Chono
 		private System.Windows.Forms.Label m_lblCopyright;
 		private System.Windows.Forms.Label m_lblAppVersion;
 		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel;
-		private System.Windows.Forms.Label lblBuildDate;
+		private System.Windows.Forms.Label m_lblBuildDate;
 		private System.Windows.Forms.Panel panelBrowser;
 		private L10NSharp.UI.L10NSharpExtender l10NSharpExtender1;
 		private System.Windows.Forms.PictureBox pictLogo;

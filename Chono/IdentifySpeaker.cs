@@ -7,7 +7,6 @@
 // </copyright> 
 #endregion
 // ---------------------------------------------------------------------------------------------
-using AddInSideViews;
 using SIL.Scripture;
 using SIL.Windows.Forms.Scripture;
 using System;
@@ -38,7 +37,6 @@ namespace SIL.Chono
 		private readonly bool m_fVernIsRtoL;
 		private readonly Action<bool> m_selectKeyboard;
 	    private readonly string m_helpHome;
-        private readonly IScrExtractor m_scrExtractor;
 	    private readonly string m_appName;
         private readonly IScrVers m_masterVersification;
         private readonly IScrVers m_projectVersification;
@@ -93,20 +91,13 @@ namespace SIL.Chono
 		/// <param name="preferredUiLocale">THE BCP-47 locale identifier to use for the user
 		/// interface</param>
 		/// ------------------------------------------------------------------------------------
-		public IdentifySpeaker(SplashScreen splashScreen, string projectName,
+		public IdentifySpeaker(string projectName,
             Font vernFont, string vernIcuLocale, string vernLanguageName, bool fVernIsRtoL,
-            IScrExtractor scrExtractor, string appName, IScrVers englishVersification,
+            string appName, IScrVers englishVersification,
             IScrVers projectVersification, BCVRef startRef, BCVRef endRef,
             Action<bool> selectKeyboard, string preferredUiLocale)
 		{
-            if (splashScreen == null)
-            {
-                splashScreen = new SplashScreen();
-                splashScreen.Show(Screen.FromPoint(Properties.Settings.Default.WindowLocation));
-            }
-            splashScreen.Message = LocalizationManager.GetString("SplashScreen.MsgInitializing", "Initializing...");
-
-            InitializeComponent();
+			InitializeComponent();
 
             if (startRef != BCVRef.Empty && endRef != BCVRef.Empty && startRef > endRef)
 				throw new ArgumentException("startRef must be before endRef");
@@ -117,7 +108,6 @@ namespace SIL.Chono
 			m_fVernIsRtoL = fVernIsRtoL;
 			m_selectKeyboard = selectKeyboard;
 
-			m_scrExtractor = scrExtractor;
 	        m_appName = appName;
             m_masterVersification = englishVersification;
             m_projectVersification = projectVersification;
@@ -160,11 +150,9 @@ namespace SIL.Chono
 			btnSendScrReferences.Checked = Properties.Settings.Default.SendScrRefs;
 			HandleStringsLocalized();
 			LocalizeItemDlg<XLiffDocument>.StringsLocalized += HandleStringsLocalized;
-
-			splashScreen.Close();
-		}			
+		}
 		
-		private void HandleStringsLocalized()
+		private void HandleStringsLocalized(ILocalizationManager mgr = null)
 		{
 			Text = Format(Text, m_projectName);
 		}
