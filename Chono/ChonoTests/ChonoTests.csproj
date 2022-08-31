@@ -290,6 +290,7 @@
     <Compile Include="StringExtensionsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestQuoteLevel.cs" />
+    <Compile Include="TestStandardVersification.cs" />
     <Compile Include="TestVerse.cs" />
   </ItemGroup>
   <ItemGroup>

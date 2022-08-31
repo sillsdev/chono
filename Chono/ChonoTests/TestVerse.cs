@@ -7,22 +7,24 @@ namespace SIL.Chono
 {
 	internal class TestVerse : IVerseRef
 	{
-		public TestVerse(int book, int chapter, int verse)
+		public TestVerse(int book, int chapter, int verse, IVersification versification = null)
 		{
 			BookNum = book;
 			ChapterNum = chapter;
 			VerseNum = verse;
 			BBBCCCVVV = book * 1000000 + chapter * 1000 + verse;
+			Versification = versification;
 		}
 
 		public bool Equals(IVerseRef other)
 		{
-			throw new NotImplementedException();
+			return BBBCCCVVV.Equals(other.BBBCCCVVV) &&
+				Versification == other.Versification;
 		}
 
 		public int CompareTo(IVerseRef other)
 		{
-			throw new NotImplementedException();
+			return BBBCCCVVV.CompareTo(other.BBBCCCVVV);
 		}
 
 		public IVerseRef ChangeVersification(IVersification newVersification)
@@ -37,7 +39,7 @@ namespace SIL.Chono
 
 		public IVerseRef GetNextVerse(IProject project)
 		{
-			throw new NotImplementedException();
+			return new TestVerse(BookNum, ChapterNum, VerseNum + 1, Versification);
 		}
 
 		public IVerseRef GetPreviousChapter(IProject project)

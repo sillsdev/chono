@@ -10,6 +10,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Paratext.PluginInterfaces;
@@ -20,6 +21,10 @@ namespace SIL.Chono
     {
 	    private const string kQuoteStylePrefix = "quote";
 	    private const string kError = "red";
+	    private const string kRgxOpenLevelGroupPrefix = "lev";
+	    private const string kRgxCloserGroupPrefix = "end";
+	    private const string kRgxContinuerGroupPrefix = "con";
+	    private const string kRgxFinalGroup = "fin";
 
 	    private class ChapterAnnotationInfo
         {
@@ -40,7 +45,8 @@ namespace SIL.Chono
         private readonly IProject m_project;
 	    private readonly Regex m_findMarksRegex;
         private int m_currentBook = -1;
-        private Dictionary<int, ChapterAnnotationInfo> m_currentBookAnnotations;
+        private readonly Dictionary<int, ChapterAnnotationInfo> m_currentBookAnnotations =
+	        new Dictionary<int, ChapterAnnotationInfo>();
 
         public AnnotationSource(IPluginHost host, IProject project)
         {
@@ -57,6 +63,32 @@ namespace SIL.Chono
             StringBuilder bldr = new StringBuilder();
             int currentLevelInBuilder = -1;
 
+            void AppendQuotationMark(string mark)
+            {
+	            if (mark.Length > 1)
+		            bldr.Append("(");
+	            bldr.Append(Regex.Escape(mark));
+	            if (mark.Length > 1)
+		            bldr.Append(")");
+            }
+            
+            void AppendNewLevel(int level, string mark)
+            {
+	            bldr.Append("(?<");
+	            bldr.Append(kRgxOpenLevelGroupPrefix);
+	            bldr.Append(level);
+	            allMarks[mark] = bldr.Length;
+	            bldr.Append(">");
+            }
+            
+            void Insert(int i, int level, string mark)
+            {
+	            bldr.Insert(i, level);
+	            var keysToIncrement = allMarks.Where(kvp => kvp.Value >= allMarks[mark])
+		            .Select(kvp => kvp.Key).ToHashSet();
+	            foreach (var key in keysToIncrement)
+					allMarks[key]++;
+            }
 
             // TODO: Handle secondary levels also.
             for (int level = 0; level < quotationMarks.PrimaryLevels.Count;)
@@ -65,75 +97,75 @@ namespace SIL.Chono
                 int i;
 
                 if (allMarks.TryGetValue(lev.Opener, out i))
-                {
-	                bldr.Insert(i, level);
-	                allMarks[lev.Opener]++;
-                }
+                    Insert(i, level, lev.Opener);
                 else
                 {
-                    if (level > currentLevelInBuilder)
+	                if (level > currentLevelInBuilder)
                     {
                         if (bldr.Length > 0)
 	                        bldr.Append(")");
-                        bldr.Append("(?<lev");
-                        bldr.Append(level);
-                        allMarks[lev.Opener] = bldr.Length;
-                        bldr.Append(">");
+                        AppendNewLevel(level, lev.Opener);
                         currentLevelInBuilder = level;
                     }
                     else
                     {
 	                    bldr.Append("|");
+	                    AppendNewLevel(level, lev.Opener);
                     }
-                    bldr.Append(Regex.Escape(lev.Opener));
+
+	                AppendQuotationMark(lev.Opener);
+					bldr.Append(")");
                 }
 
                 level++;
 
                 if (allMarks.TryGetValue(lev.Closer, out i))
-                {
-	                bldr.Insert(i, level);
-	                allMarks[lev.Closer]++;
-                }
+	                Insert(i, level, lev.Closer);
                 else
                 {
 	                bldr.Append("|");
-	                bldr.Append("(?<lev");
+	                bldr.Append("(?<");
+	                bldr.Append(kRgxCloserGroupPrefix);
 	                bldr.Append(level);
 	                allMarks[lev.Closer] = bldr.Length;
 	                bldr.Append(">");
-	                bldr.Append(Regex.Escape(lev.Closer));
+	                AppendQuotationMark(lev.Closer);
 					currentLevelInBuilder = level;
+					bldr.Append(")");
                 }
 
                 if (!string.IsNullOrEmpty(lev.Continuer) && allMarks.TryGetValue(lev.Continuer, out i))
                 {
 	                if (Int32.Parse(bldr[i - 1].ToString()) != level)
-	                {
-		                bldr.Insert(i, level);
-		                allMarks[lev.Continuer]++;
-	                }
+						Insert(i, level, lev.Continuer);
                 }
                 else
                 {
 	                if (level > currentLevelInBuilder)
 	                {
-		                bldr.Append("(?<lev");
-		                bldr.Append(level);
-		                allMarks[lev.Continuer] = bldr.Length;
-		                bldr.Append(">");
+                        AppendNewLevel(level, lev.Continuer);
 		                currentLevelInBuilder = level;
 	                }
 	                else
 	                {
 		                bldr.Append("|");
+		                bldr.Append("(?<");
+		                bldr.Append(kRgxContinuerGroupPrefix);
+		                bldr.Append(level);
+		                allMarks[lev.Continuer] = bldr.Length;
+		                bldr.Append(">");
 	                }
+	                bldr.Append("(^");
 	                bldr.Append(Regex.Escape(lev.Continuer));
+	                bldr.Append("))");
                 }
-                bldr.Append(")");
-
-                m_findMarksRegex = new Regex(bldr.ToString(), RegexOptions.Compiled);
             }
+
+            bldr.Append("|(?<");
+            bldr.Append(kRgxFinalGroup);
+            bldr.Append(">.$)");
+
+            m_findMarksRegex = new Regex(bldr.ToString(), RegexOptions.Compiled);
         }
 
         private void ProjectDataChanged(IProject sender, ProjectDataChangeType details)
@@ -161,7 +193,7 @@ namespace SIL.Chono
 
         private void ClearAllAnnotations()
         {
-	        m_currentBookAnnotations = null;
+	        m_currentBookAnnotations.Clear();
 	        m_currentBook = -1;
 	        AnnotationsChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -196,7 +228,9 @@ namespace SIL.Chono
 	        var chapter = verseRef.ChapterNum;
 	        PopulateAnnotations(verseRef.BookNum, chapter);
 
-	        return m_currentBookAnnotations[chapter].Annotations;
+	        return m_currentBookAnnotations[chapter].Annotations.Where(a =>
+		        a.ScriptureSelection.VerseRefStart.CompareTo(verseRef) <= 0 &&
+		        a.ScriptureSelection.VerseRefEnd.CompareTo(verseRef) >= 0).ToList();
         }
 
         private void PopulateAnnotations(int bookNum, int chapter)
@@ -204,7 +238,7 @@ namespace SIL.Chono
             // First see if any "holes" in a preceding chapter require us to
             // rescan.
             int startingQuoteLevel = 0;
-            for (int c = 1; c < chapter; c++)
+            for (int c = 1; c <= chapter; c++)
             {
                 if (m_currentBookAnnotations.TryGetValue(c, out var annotationInfo))
                 {
@@ -213,22 +247,80 @@ namespace SIL.Chono
 		                startingQuoteLevel = annotationInfo.QuoteLevelAtEndOfChapter;
 		                continue;
 	                }
+                }
 
-	                var annotations = new List<IPluginAnnotation>();
-	                foreach (var tok in m_project.GetUSFMTokens(bookNum, c))
+                var currentQuoteLevel = startingQuoteLevel;
+                var annotations = new List<IPluginAnnotation>();
+                foreach (var textTok in m_project.GetUSFMTokens(bookNum, c)
+	                .OfType<IUSFMTextToken>().Where(tok => tok.IsScripture))
+                {
+	                var text = textTok.Text;
+	                int start = 0, end = 0;
+	                bool opener = false;
+
+	                void AddAnnotation(Capture capture, bool openingNestedQuote = false)
 	                {
-		                if (tok.IsScripture)
-                        {
-                            if (tok is IUSFMTextToken text)
-                            {
-	                            foreach (var ch in text.Text)
-	                            {
-		                            
-	                            }
-                            }
-                        }
+		                var cCaptureCharsIncludedInSelection = (openingNestedQuote ? 0 : capture.Length);
+		                annotations.Add(new Annotation(
+			                new Selection(
+				                text.Substring(start, capture.Index + cCaptureCharsIncludedInSelection - start),
+				                text.Substring(0, start),
+				                text.Substring(capture.Index + cCaptureCharsIncludedInSelection),
+				                textTok.VerseRef,
+				                textTok.VerseOffset + start),
+			                kQuoteStylePrefix + currentQuoteLevel));
+	                }
+
+	                foreach (Match match in m_findMarksRegex.Matches(text))
+	                {
+		                string validMatchLevels = null;
+		                foreach (Group matchGroup in match.Groups)
+		                {
+			                if (matchGroup.Success)
+			                {
+				                if (matchGroup.Name.StartsWith(kRgxOpenLevelGroupPrefix))
+				                {
+					                opener = true;
+					                validMatchLevels = matchGroup.Name.Substring(3);
+					                break;
+				                }
+
+				                if (matchGroup.Name.StartsWith(kRgxCloserGroupPrefix))
+				                {
+					                opener = false;
+					                validMatchLevels = matchGroup.Name.Substring(3);
+					                break;
+				                }
+                                if (matchGroup.Name == kRgxFinalGroup && currentQuoteLevel > 0)
+                                {
+                                    AddAnnotation(match);
+	                                break;
+                                }
+			                }
+		                }
+
+		                if (validMatchLevels != null && validMatchLevels.Contains(currentQuoteLevel.ToString()))
+		                {
+			                if (opener)
+			                {
+                                if (currentQuoteLevel > 0)
+	                                AddAnnotation(match, true);
+				                start = match.Index;
+				                currentQuoteLevel++;
+			                }
+			                else
+			                {
+                                AddAnnotation(match);
+                                if (--currentQuoteLevel > 0)
+	                                start = match.Index + match.Length;
+			                }
+		                }
 	                }
                 }
+
+                m_currentBookAnnotations[c] = new ChapterAnnotationInfo(annotations, currentQuoteLevel, startingQuoteLevel);
+
+                startingQuoteLevel = currentQuoteLevel;
             }
         }
 
