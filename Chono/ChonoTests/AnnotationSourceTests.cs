@@ -24,10 +24,6 @@ namespace SIL.Chono
 
 		private class TestProject : IProject
 		{
-			internal const string kJohn4V9BeforeQuote = "The lady replied, ";
-			internal const string kJohn4V9Quote = "“You are a Jew and I am a Samaritan woman. How can you ask me for water?”";
-			internal const string kJohn4V9AfterQuote = " (For Jews avoid Samaritans.)";
-
 			internal const string kJer1V5Line1 = "“Before I formed you in the womb I knew you, ";
 			internal const string kJer1V5Line2 = "before you were born I set you apart; ";
 			internal const string kJer1V5Line3 = "I appointed you as a prophet to the nations.”";
@@ -39,6 +35,12 @@ namespace SIL.Chono
 
 			internal const string kJer1V8Lev1Quote = "Do not be afraid of them, for I am with you and will rescue you,”";
 			internal const string kJer1V8AfterQuote = " declares the Lord.";
+
+			internal const string kMat5V4Text = "Blessed are those who mourn, for they shall be comforted.";
+
+			internal const string kJohn4V9BeforeQuote = "The lady replied, ";
+			internal const string kJohn4V9Quote = "“You are a Jew and I am a Samaritan woman. How can you ask me for water?”";
+			internal const string kJohn4V9AfterQuote = " (For Jews avoid Samaritans.)";
 
 			private class TestLanguage : IProjectLanguage
 			{
@@ -192,17 +194,14 @@ namespace SIL.Chono
 				IVerseRef reference, string selectedText, string verseUsfm = null,
 				bool wholeWord = false, bool treatAsRegex = false)
 			{
+				if (selectedText == "")
+					throw new Exception($"ERROR: The plugin {ChonoPlugin.kPluginName} created a " +
+						"zero-length annotation without an icon.");
+
 				IScriptureTextSelection sel = null;
 				var v = @"\v " + $"{reference.VerseNum} ";
 				switch (reference.BBBCCCVVV)
 				{
-					case 43004009:
-						if (selectedText == kJohn4V9Quote)
-						{
-							sel = new TestScriptureSelection(reference, selectedText,
-								v + kJohn4V9BeforeQuote, kJohn4V9AfterQuote);
-						}
-						break;
 					case 24001005:
 						if (selectedText == kJer1V5Line1)
 							sel = new TestScriptureSelection(reference, selectedText, v, "");
@@ -235,17 +234,31 @@ namespace SIL.Chono
 						}
 						break;
 					case 24001008:
-						// TODO: Probably need to add one for an annotation that covers the verse number itself.
-						if (selectedText == kJer1V8Lev1Quote)
+						if (selectedText == "8") // REVIEW: If we want to create verse-number annotations, is this what the text should be?
+							sel = new TestScriptureSelection(reference, selectedText, "", "");
+						else if (selectedText == kJer1V8Lev1Quote)
 						{
 							sel = new TestScriptureSelection(reference, selectedText,
 								v, kJer1V8AfterQuote);
 						}
 						break;
+					case 40005004:
+						if (selectedText == "4") // REVIEW: If we want to create verse-number annotations, is this what the text should be?
+							sel = new TestScriptureSelection(reference, selectedText, "", "");
+						else if (selectedText.EndsWith(kMat5V4Text))
+							sel = new TestScriptureSelection(reference, selectedText, v, "");
+						break;
+					case 43004009:
+						if (selectedText == kJohn4V9Quote)
+						{
+							sel = new TestScriptureSelection(reference, selectedText,
+								v + kJohn4V9BeforeQuote, kJohn4V9AfterQuote);
+						}
+						break;
 				}
 
 				if (sel == null)
-					return new List<IScriptureTextSelection>();
+					sel = new TestScriptureSelection(reference, selectedText, "NOT FOUND", "NOT FOUND");
 				return new [] {sel}.ToReadOnlyList();
 			}
 
@@ -276,7 +289,6 @@ namespace SIL.Chono
 				switch (bookNum)
 				{
 					case 24: // JER
-					{
 						switch (chapterNum)
 						{
 							case 0:
@@ -309,54 +321,95 @@ namespace SIL.Chono
 							default:
 								yield break;
 						}
-					}
-					break;
+						break;
 
-					case 43: // JHN
+					case 40: // MAT
+						switch (chapterNum)
 						{
-							switch (chapterNum)
-							{
-								case 0:
-								case 1:
-									verse = new TestVerse(bookNum, 1, 0, versification);
-									yield return new TestMarkerToken(verse, "id", "JHN");
-									yield return new TestMarkerToken(verse, "c", "1");
-									if (chapterNum == 0)
-										goto case 2;
-									break;
-								case 2:
-									verse = new TestVerse(bookNum, 2, 0, versification);
-									yield return new TestMarkerToken(verse, "c", "2");
-									if (chapterNum == 0)
-										goto case 3;
-									break;
-								case 3:
-									verse = new TestVerse(bookNum, 3, 0, versification);
-									yield return new TestMarkerToken(verse, "c", "3");
-									if (chapterNum == 0)
-										goto case 4;
-									break;
-								case 4:
-									verse = new TestVerse(bookNum, 4, 0, versification);
-									yield return new TestMarkerToken(verse, "c", "4");
-									foreach (var tok in GetVerses(verse,
-										"Now Jesus learned that the Pharisees knew he was baptizing more disciples than John— ",
-										"although in fact it was not Jesus who baptized, but his disciples. ",
-										"So he left Judea and went back once more to Galilee. ",
-										NewLine,
-										"Now he had to go through Samaria. ",
-										"They came to a town near the ground Jacob had given to Joseph. ",
-										"Jesus, tired from the journey, sat down by the well around noon. ",
-										NewLine,
-										"A Samaritan lady came for water and Jesus said to her, “Will you give me a drink?” ",
-										"(His disciples had gone into the town to buy food.) ",
-										NewLine,
-										kJohn4V9BeforeQuote + kJohn4V9Quote + kJohn4V9AfterQuote))
-										yield return tok;
-									break;
-								default:
-									yield break;
-							}
+							case 0:
+							case 1:
+								verse = new TestVerse(bookNum, 1, 0, versification);
+								yield return new TestMarkerToken(verse, "id", "MAT");
+								yield return new TestMarkerToken(verse, "c", "1");
+								if (chapterNum == 0)
+									goto case 2;
+								break;
+							case 2:
+								verse = new TestVerse(bookNum, 2, 0, versification);
+								yield return new TestMarkerToken(verse, "c", "2");
+								if (chapterNum == 0)
+									goto case 3;
+								break;
+							case 3:
+								verse = new TestVerse(bookNum, 3, 0, versification);
+								yield return new TestMarkerToken(verse, "c", "3");
+								if (chapterNum == 0)
+									goto case 4;
+								break;
+							case 4:
+								verse = new TestVerse(bookNum, 4, 0, versification);
+								yield return new TestMarkerToken(verse, "c", "4");
+								if (chapterNum == 0)
+									goto case 5;
+								break;
+							case 5:
+								verse = new TestVerse(bookNum, 5, 0, versification);
+								yield return new TestMarkerToken(verse, "c", "5");
+								foreach (var tok in GetVerses(verse,
+									         "Seeing the crowds, he sat down and his disciples came to him. ",
+									         NewLine,
+									         "And he opened his mouth and taught them, saying: ",
+									         NewLine,
+									         "“Blessed are the poor in spirit, for theirs is the kingdom of heaven. ",
+									         NewLine,
+									         Language.QuotationMarkInfo.PrimaryLevels[0].Continuer + kMat5V4Text))
+									yield return tok;
+								break;
+						}
+						break;
+					case 43: // JHN
+						switch (chapterNum)
+						{
+							case 0:
+							case 1:
+								verse = new TestVerse(bookNum, 1, 0, versification);
+								yield return new TestMarkerToken(verse, "id", "JHN");
+								yield return new TestMarkerToken(verse, "c", "1");
+								if (chapterNum == 0)
+									goto case 2;
+								break;
+							case 2:
+								verse = new TestVerse(bookNum, 2, 0, versification);
+								yield return new TestMarkerToken(verse, "c", "2");
+								if (chapterNum == 0)
+									goto case 3;
+								break;
+							case 3:
+								verse = new TestVerse(bookNum, 3, 0, versification);
+								yield return new TestMarkerToken(verse, "c", "3");
+								if (chapterNum == 0)
+									goto case 4;
+								break;
+							case 4:
+								verse = new TestVerse(bookNum, 4, 0, versification);
+								yield return new TestMarkerToken(verse, "c", "4");
+								foreach (var tok in GetVerses(verse,
+									         "Now Jesus learned that the Pharisees knew he was baptizing more disciples than John— ",
+									         "although in fact it was not Jesus who baptized, but his disciples. ",
+									         "So he left Judea and went back once more to Galilee. ",
+									         NewLine,
+									         "Now he had to go through Samaria. ",
+									         "They came to a town near the ground Jacob had given to Joseph. ",
+									         "Jesus, tired from the journey, sat down by the well around noon. ",
+									         NewLine,
+									         "A Samaritan lady came for water and Jesus said to her, “Will you give me a drink?” ",
+									         "(His disciples had gone into the town to buy food.) ",
+									         NewLine,
+									         kJohn4V9BeforeQuote + kJohn4V9Quote + kJohn4V9AfterQuote))
+									yield return tok;
+								break;
+							default:
+								yield break;
 						}
 						break;
 					default:
@@ -640,21 +693,57 @@ namespace SIL.Chono
 			var project = new TestProject(quoteInfo);
 			var sut = new AnnotationSource(null, project);
 			var verse = new TestVerse(24, 1, 8);
-			// REVIEW: Probably also need annotation for the verse number itself.
-			var annotation = sut.GetAnnotations(verse,
-				@"\v 8 " + TestProject.kJer1V8Lev1Quote + TestProject.kJer1V8AfterQuote).Single();
+			var annotations = sut.GetAnnotations(verse,
+				@"\v 8 " + TestProject.kJer1V8Lev1Quote + TestProject.kJer1V8AfterQuote);
 
-			VerifyPluginAnnotation(annotation, project, verse);
-			Assert.That(annotation.ScriptureSelection.SelectedText, 
+			// The first annotation is for the verse number itself (even though Paratext may not
+			// highlight it correctly).
+			Assert.That(annotations.Count, Is.EqualTo(2));
+			Assert.That(annotations[0].ScriptureSelection.Offset, Is.EqualTo(0));
+			Assert.That(annotations[1].ScriptureSelection.SelectedText,
 				Is.EqualTo(TestProject.kJer1V8Lev1Quote));
-			Assert.That(annotation.StyleName, Is.EqualTo("quote1"));
+
+			foreach (var annotation in annotations)
+			{
+				VerifyPluginAnnotation(annotation, project, verse);
+				Assert.That(annotation.StyleName, Is.EqualTo("quote1"));
+			}
 		}
 
 		[TestCase(Continuers.RepeatAllLevels)]
 		[TestCase(Continuers.SameAsOpener)]
 		[TestCase(Continuers.SameAsCloser)]
 		[TestCase(Continuers.None)]
-		public void GetAnnotations_Continuers2_ReturnsAnnotationsForContPara(Continuers continuers)
+		public void GetAnnotations_Lev1ContinuerAtStartOfVerse_ReturnsAnnotationsForContPara(
+			Continuers continuers)
+		{
+			var quoteInfo = GetQuoteInfo(1, continuers);
+			var project = new TestProject(quoteInfo);
+			var sut = new AnnotationSource(null, project);
+			var verse = new TestVerse(40, 5, 4);
+			var annotations = sut.GetAnnotations(verse,
+				@"\v 4 " + quoteInfo.PrimaryLevels[0].Continuer + TestProject.kMat5V4Text);
+
+			// The first annotation is for the verse number itself (even though Paratext may not
+			// highlight it correctly).
+			Assert.That(annotations.Count, Is.EqualTo(2));
+			Assert.That(annotations[0].ScriptureSelection.Offset, Is.EqualTo(0));
+			Assert.That(annotations[1].ScriptureSelection.SelectedText,
+				Is.EqualTo(quoteInfo.PrimaryLevels[0].Continuer + TestProject.kMat5V4Text));
+
+			foreach (var annotation in annotations)
+			{
+				VerifyPluginAnnotation(annotation, project, verse);
+				Assert.That(annotation.StyleName, Is.EqualTo("quote1"));
+			}
+		}
+
+		[TestCase(Continuers.RepeatAllLevels)]
+		[TestCase(Continuers.SameAsOpener)]
+		[TestCase(Continuers.SameAsCloser)]
+		[TestCase(Continuers.None)]
+		public void GetAnnotations_Lev2Continuer_ReturnsAnnotationsForContPara(
+			Continuers continuers)
 		{
 			var quoteInfo = GetQuoteInfo(2, continuers);
 			var project = new TestProject(quoteInfo);
@@ -666,7 +755,8 @@ namespace SIL.Chono
 		[TestCase(Continuers.SameAsOpener)]
 		[TestCase(Continuers.SameAsCloser)]
 		[TestCase(Continuers.None)]
-		public void GetAnnotations_Continuers3_ReturnsAnnotationsForContPara(Continuers continuers)
+		public void GetAnnotations_Lev3Continuer_ReturnsAnnotationsForContPara(
+			Continuers continuers)
 		{
 			var quoteInfo = GetQuoteInfo(3, continuers);
 			var project = new TestProject(quoteInfo);
