@@ -10,16 +10,19 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Paratext.PluginInterfaces;
+using static System.Char;
 
 namespace SIL.Chono
 {
     internal class AnnotationSource : IPluginAnnotationSource
     {
-	    private const string kQuoteStylePrefix = "quote";
+	    public const string kQuoteStylePrefix = "quote";
+	    public const string kNonScrQuoteStylePrefix = "xquote";
 	    private const string kError = "red";
 	    private const string kRgxOpenLevelGroupPrefix = "lev";
 	    private const string kRgxCloserGroupPrefix = "end";
@@ -43,8 +46,9 @@ namespace SIL.Chono
 
         private readonly IPluginHost m_host;
         private readonly IProject m_project;
+        private readonly HashSet<char> m_allQuoteChars;
 	    private readonly Regex m_findMarksRegex;
-        private int m_currentBook = -1;
+	    private int m_currentBook = -1;
         private readonly Dictionary<int, ChapterAnnotationInfo> m_currentBookAnnotations =
 	        new Dictionary<int, ChapterAnnotationInfo>();
 
@@ -96,6 +100,8 @@ namespace SIL.Chono
                 IQuotationMarkLevel lev = quotationMarks.PrimaryLevels[level];
                 int i;
 
+				// TODO: Deal with apostrophe's (the same way Paratext does)...
+
                 if (allMarks.TryGetValue(lev.Opener, out i))
                     Insert(i, level, lev.Opener);
                 else
@@ -134,12 +140,7 @@ namespace SIL.Chono
 					bldr.Append(")");
                 }
 
-                if (!string.IsNullOrEmpty(lev.Continuer) && allMarks.TryGetValue(lev.Continuer, out i))
-                {
-	                if (Int32.Parse(bldr[i - 1].ToString()) != level)
-						Insert(i, level, lev.Continuer);
-                }
-                else
+                if (!string.IsNullOrEmpty(lev.Continuer) && !allMarks.TryGetValue(lev.Continuer, out i))
                 {
 	                if (level > currentLevelInBuilder)
 	                {
@@ -166,6 +167,7 @@ namespace SIL.Chono
             bldr.Append(">.$)");
 
             m_findMarksRegex = new Regex(bldr.ToString(), RegexOptions.Compiled);
+            m_allQuoteChars = new HashSet<char>(allMarks.Keys.SelectMany(k => k.ToCharArray()));
         }
 
         private void ProjectDataChanged(IProject sender, ProjectDataChangeType details)
@@ -210,6 +212,11 @@ namespace SIL.Chono
                 new AnnotationStyle(kQuoteStylePrefix + "0", "background-color:lightgreen;"),
                 new AnnotationStyle(kQuoteStylePrefix + "1", "background-color:lawngreen;"),
                 new AnnotationStyle(kQuoteStylePrefix + "2", "background-color:green;"),
+                new AnnotationStyle(kQuoteStylePrefix + "3", "background-color:darkgreen;"),
+				// Unlikely that we would ever need to go more than two levels deep in section
+				// heads, intro material, etc.
+                new AnnotationStyle(kNonScrQuoteStylePrefix + "0", "background-color:khaki;"),
+                new AnnotationStyle(kNonScrQuoteStylePrefix + "1", "background-color:gold;"),
                 new AnnotationStyle(kError, "background-color:red;"),
             };
         }
@@ -249,40 +256,64 @@ namespace SIL.Chono
 	                }
                 }
 
-                var currentQuoteLevel = startingQuoteLevel;
+                var currentQuoteLevel = new Dictionary<bool, int>
+                {
+	                [true] = startingQuoteLevel,
+	                [false] = 0
+                };
                 var annotations = new List<IPluginAnnotation>();
                 bool atParaStart = false;
-                foreach (var tok in m_project.GetUSFMTokens(bookNum, c).Where(t => t.IsScripture))
+                foreach (var tok in m_project.GetUSFMTokens(bookNum, c))
                 {
+					// Quotes in non-Scripture never carry over to subsequent non-Scripture text.
+	                if (tok.IsScripture)
+		                currentQuoteLevel[false] = 0;
+
 	                if (tok is IUSFMMarkerToken markerTok)
 	                {
-						if (currentQuoteLevel > 0 && markerTok.Marker == "v")
+		                if (markerTok.Marker == "v")
+		                {
+			                if (currentQuoteLevel[tok.IsScripture] > 0)
+			                {
+				                annotations.Add(new Annotation(new Selection($"\\v {markerTok.Data} ",
+						                "", "", tok.VerseRef, 1),
+					                currentQuoteLevel[true]));
+			                }
+		                }
+		                else if (markerTok.Type == MarkerType.Paragraph)
 						{
-							annotations.Add(new Annotation(new Selection(markerTok.Data, "", "", tok.VerseRef),
-								kQuoteStylePrefix + currentQuoteLevel));
-						}
-						else if (markerTok.Type == MarkerType.Paragraph)
 							atParaStart = true;
+						}
 	                }
 					else if (tok is IUSFMTextToken textTok)
 	                {
 		                var text = textTok.Text;
 		                int start = 0;
-		                var continuer = false;
+		                var continuerLevel = 0;
 
 		                void AddAnnotation(Capture capture, bool openingNestedQuote = false)
 		                {
+			                continuerLevel = 0;
 			                var cCaptureCharsIncludedInSel = 
 				                (openingNestedQuote ? 0 : capture.Length);
-			                annotations.Add(new Annotation(
-				                new Selection(
-					                text.Substring(start,
-						                capture.Index + cCaptureCharsIncludedInSel - start),
-					                text.Substring(0, start),
-					                text.Substring(capture.Index + cCaptureCharsIncludedInSel),
-					                textTok.VerseRef,
-					                textTok.VerseOffset + start),
-				                kQuoteStylePrefix + currentQuoteLevel));
+			                var selLength = capture.Index + cCaptureCharsIncludedInSel - start;
+			                if (selLength == 0)
+				                return;
+			                var selectedText = text.Substring(start, selLength);
+			                var level = currentQuoteLevel[tok.IsScripture];
+			                if (!(annotations.LastOrDefault() is Annotation prevAnnotation) ||
+			                    !prevAnnotation.TryExtend(tok.VerseRef, selectedText, level, 
+				                    tok.IsScripture, m_allQuoteChars))
+			                {
+				                annotations.Add(new Annotation(
+					                new Selection(
+						                selectedText,
+						                text.Substring(0, start),
+						                text.Substring(capture.Index + cCaptureCharsIncludedInSel),
+						                textTok.VerseRef,
+						                textTok.VerseOffset + start),
+					                level, tok.IsScripture));
+			                }
 		                }
 
 		                foreach (Match match in m_findMarksRegex.Matches(text))
@@ -290,48 +321,60 @@ namespace SIL.Chono
 							// We skip the first one, which is always "0".
 			                foreach (var matchGroup in match.SuccessfulMatchGroups().Skip(1))
 			                {
+				                var currLevel = currentQuoteLevel[tok.IsScripture];
+								if (atParaStart)
+								{
+									if (continuerLevel < currLevel && IsCorrectContinuer(continuerLevel, match))
+									{
+										atParaStart = ++continuerLevel < currLevel;
+										continue;
+									}
+									atParaStart = false;
+								}
+
 				                if (matchGroup.Name.StartsWith(kRgxOpenLevelGroupPrefix))
 				                {
 					                var validMatchLevels = matchGroup.Name.Substring(3);
-					                var index = validMatchLevels.IndexOf(currentQuoteLevel.ToString(),
+					                var index = validMatchLevels.IndexOf(currLevel.ToString(),
 						                StringComparison.Ordinal);
 					                if (index >= 0)
 					                {
-						                if (currentQuoteLevel > 0)
-						                {
-							                continuer = atParaStart && index > 0;
-											if (!continuer)
-												AddAnnotation(match, true);
-						                }
+						                if (currLevel > 0)
+							                AddAnnotation(match, true);
 
 						                start = match.Index;
-										if (!continuer)
-											currentQuoteLevel++;
+						                currentQuoteLevel[tok.IsScripture]++;
 					                }
 					                break;
 				                }
 
 				                if (matchGroup.Name.StartsWith(kRgxCloserGroupPrefix))
 				                {
-					                var validMatchLevels = matchGroup.Name.Substring(3);
-					                if (validMatchLevels.Contains(currentQuoteLevel.ToString()))
+					                if (currLevel > 0)
 					                {
-						                AddAnnotation(match);
-						                if (--currentQuoteLevel > 0)
-							                start = match.Index + match.Length;
-					                }
-					                break;
+										continuerLevel = 0;
+										var validMatchLevels = matchGroup.Name.Substring(3);
+										if (validMatchLevels.Contains(currentQuoteLevel[tok.IsScripture].ToString()))
+										{
+											AddAnnotation(match);
+											if (--currentQuoteLevel[tok.IsScripture] > 0)
+												start = match.Index + match.Length;
+										}
+									} 
+										
+									break;
 				                }
 
-				                if (matchGroup.Name == kRgxFinalGroup && currentQuoteLevel > 0)
+				                if (matchGroup.Name == kRgxFinalGroup && currentQuoteLevel[tok.IsScripture] > 0)
 				                {
 					                AddAnnotation(match);
+					                continuerLevel = 0;
 					                break;
 				                }
 			                
 							}
 
-			                atParaStart = false;
+			                atParaStart = continuerLevel > 0;
 		                }
 		                
 		                atParaStart = false;
@@ -339,10 +382,16 @@ namespace SIL.Chono
                 }
 
                 m_currentBookAnnotations[c] = new ChapterAnnotationInfo(annotations,
-	                currentQuoteLevel, startingQuoteLevel);
+	                currentQuoteLevel[true], startingQuoteLevel);
 
-                startingQuoteLevel = currentQuoteLevel;
+                startingQuoteLevel = currentQuoteLevel[true];
             }
+        }
+
+        private bool IsCorrectContinuer(int continuerLevel, Match match)
+        {
+			// TODO: Handle secondary levels
+	        return m_project.Language.QuotationMarkInfo.PrimaryLevels[continuerLevel].Continuer == match.Value;
         }
 
         #endregion
@@ -350,14 +399,28 @@ namespace SIL.Chono
         #region Annotation class
         private sealed class Annotation : IPluginAnnotation
         {
-            public Annotation(IScriptureTextSelection selection, string styleName)
-            {
-                ScriptureSelection = selection;
-                StyleName = styleName;
-            }
-            public IScriptureTextSelection ScriptureSelection { get; }
+	        private readonly Selection m_selection;
+	        private int m_level;
+	        private readonly bool m_isScripture;
 
-            public string StyleName { get; }
+	        public Annotation(Selection selection, int level, bool isScripture = true)
+	        {
+		        m_selection = selection;
+		        m_level = level;
+		        m_isScripture = isScripture;
+	        }
+
+	        public IScriptureTextSelection ScriptureSelection => m_selection;
+
+            public string StyleName
+            {
+	            get
+	            {
+		            var prefix = m_isScripture ? kQuoteStylePrefix : kNonScrQuoteStylePrefix;
+		            int level = m_isScripture ? m_level % 4 : m_level % 2;
+			        return prefix + level.ToString(CultureInfo.InvariantCulture);
+	            }
+            }
 
             public string Icon => null;
 
@@ -367,6 +430,33 @@ namespace SIL.Chono
             {
                 return false;
             }
+
+			public bool TryExtend(IVerseRef verse, string selectedText, int level, bool isScripture,
+				HashSet<char> allQuoteChars)
+			{
+				if (verse.Equals(ScriptureSelection.VerseRefStart) &&
+				    isScripture == m_isScripture)
+				{
+					if (level == m_level + 1)
+					{
+						if (ScriptureSelection.SelectedText.Any() &&
+						    ScriptureSelection.SelectedText.All(c => allQuoteChars.Contains(c) || IsWhiteSpace(c)))
+						{
+							m_selection.Merge(selectedText);
+							m_level = level;
+							return true;
+						}
+					}
+					if (level == m_level - 1 &&
+					    selectedText.All(allQuoteChars.Contains))
+					{
+						m_selection.Merge(selectedText);
+						return true;
+					}
+				}
+
+				return false;
+			}
         }
         #endregion
         
@@ -388,13 +478,13 @@ namespace SIL.Chono
 
             public IVerseRef VerseRefEnd { get; }
 
-            public string SelectedText { get; }
+            public string SelectedText { get; private set; }
 
             public int Offset { get; }
 
             public string BeforeContext { get; }
 
-            public string AfterContext { get; }
+            public string AfterContext { get; private set; }
 
             public bool Equals(ISelection other)
             {
@@ -407,6 +497,14 @@ namespace SIL.Chono
 	                VerseRefEnd.Equals(o.VerseRefEnd) &&
 	                Offset.Equals(o.Offset);
             }
+
+			public void Merge(string additionalSelectedText)
+			{
+				if (!AfterContext.StartsWith(additionalSelectedText, StringComparison.Ordinal))
+					throw new InvalidOperationException("Invalid merge!");
+				SelectedText += additionalSelectedText;
+				AfterContext = AfterContext.Substring(additionalSelectedText.Length);
+			}
         }
         #endregion
     }

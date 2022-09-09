@@ -13,6 +13,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Windows.Forms;
 using DesktopAnalytics;
 using L10NSharp;
 using Paratext.PluginInterfaces;
@@ -99,7 +100,7 @@ namespace SIL.Chono
 			}
 		}
 
-		public void ShowSpeakersMenuClicked(IWindowPluginHost host, IParatextChildState state)
+		public static void ShowSpeakersMenuClicked(IWindowPluginHost host, IParatextChildState state)
 		{
 			host.ShowEmbeddedUi(new ShowSpeakersControl(), state.Project);
 
@@ -223,17 +224,22 @@ namespace SIL.Chono
 			ErrorReport.AddProperty("Plugin Name", kPluginName);
 			ErrorReport.AddProperty("Version", $"{Version} (apparent build date: {buildDate})");
 			ErrorReport.AddProperty("Host Application", m_host.ApplicationName + " " + m_host.ApplicationVersion);
-			try
-			{
+			// Note that the following is not thread-safe. In practice, this should be fine since
+			// Paratext does not instantiate plugins in different threads.
+			var existing = ExceptionHandler.TypeOfExistingHandler;
+			if (existing == null)
 				ExceptionHandler.Init(new WinFormsExceptionHandler(false));
-			}
-			catch (InvalidOperationException)
+			else
 			{
-				// Probably a different plugin already set this.
-				// ENHANCE: Upgrade SIL.ErrorReporting to be able to check
-				// ExceptionHandler.TypeOfExistingHandler to deal with this more gracefully.
-				// See https://github.com/sillsdev/libpalaso/pull/1223
-
+				var msg = "ExceptionHandler already set (presumably by another plugin) to " +
+					$"instance of {existing}";
+				Logger.WriteEvent(msg);
+#if DEBUG
+				// Give developer a chance to explore this situation and determine if there will be
+				// any negative implications.
+				if (!typeof(WinFormsExceptionHandler).IsAssignableFrom(existing))
+					MessageBox.Show(msg, kPluginName);
+#endif
 			}
 		}
 

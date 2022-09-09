@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using NUnit.Framework;
 using Paratext.PluginInterfaces;
 using SIL.Scripture;
 
@@ -34,7 +35,8 @@ namespace SIL.Chono
 
 		public IVerseRef GetPreviousVerse(IProject project)
 		{
-			throw new NotImplementedException();
+			Assert.That(VerseNum, Is.GreaterThanOrEqualTo(1));
+			return new TestVerse(BookNum, ChapterNum, VerseNum - 1, Versification);
 		}
 
 		public IVerseRef GetNextVerse(IProject project)
@@ -70,5 +72,7 @@ namespace SIL.Chono
 		public IVersification Versification { get; }
 		public bool RepresentsMultipleVerses => false;
 		public IReadOnlyList<IVerseRef> AllVerses => new[] { this };
+
+		public override string ToString() => $"{BookCode} {ChapterNum}:{VerseNum}";
 	}
 }
