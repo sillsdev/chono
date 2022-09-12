@@ -2,15 +2,16 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Paratext.PluginInterfaces;
 using SIL.Extensions;
 using static System.Char;
 using static System.Environment;
-using static SIL.Chono.AnnotationSourceTests;
 
 namespace SIL.Chono
 {
@@ -22,6 +23,9 @@ namespace SIL.Chono
 	[TestFixture]
 	public class AnnotationSourceTests
 	{
+		// See https://github.com/ubsicap/paratext_demo_plugins/issues/18
+		private const int kNumberOfAnnotationsForAVerseNumber = 0;
+
 		public enum Continuers
 		{
 			RepeatAllOpeners,
@@ -49,7 +53,10 @@ namespace SIL.Chono
 
 			internal const string kMat5V4Text = "Blessed are those who mourn, for they shall be comforted.";
 
-			internal const string kMat6SectHead1To4 = "Beware of “showing off";
+			internal const string kMat6SectHead1To4BeforeQuote = "Beware of ";
+			internal const string kMat6SectHead1To4QuoteNotClosed = "“showing off";
+			internal const string kMat6SectHead1To4 = kMat6SectHead1To4BeforeQuote + kMat6SectHead1To4QuoteNotClosed;
+			internal const string kMat7V20 = "So you will know who they are by what comes out. ";
 			internal const string kMat7SectHead21To23 = "What it means to have Jesus as Lord";
 			internal const string kMat7SectHead24To27 = "Jesus says: “Build Your House on the Rock”";
 			internal const string kMat7V23Lev1Quote = "Then I’ll tell them, ";
@@ -139,17 +146,16 @@ namespace SIL.Chono
 
 			private class TestTextToken : TestTokenBase, IUSFMTextToken
 			{
-				private bool _isScripture;
-
-				public TestTextToken(IVerseRef verseRef, string text, int offset = 0, bool isScripure = true) :
+				public TestTextToken(IVerseRef verseRef, string text, int offset = 0, bool isScripture = true) :
 					base(verseRef, offset)
 				{
 					Text = text;
-					_isScripture = isScripure;
+					IsScripture = isScripture;
 				}
 
 				public string Text { get; }
-				public override bool IsScripture => _isScripture;
+				public override bool IsScripture { get; }
+
 				public override int EndVerseOffset => VerseOffset + Text.Length;
 			}
 
@@ -190,6 +196,8 @@ namespace SIL.Chono
 				public IEnumerable<IUSFMAttribute> Attributes => null;
 				public string Data { get; }
 				public string EndMarker => null;
+				public override bool IsScripture => !Marker.StartsWith("s");
+
 				public override int EndVerseOffset => VerseOffset + @"\".Length + Marker.Length +
 					" ".Length + (Data == null ? 0 : Data.Length + " ".Length);
 			}
@@ -233,6 +241,15 @@ namespace SIL.Chono
 					throw new Exception($"ERROR: The plugin {ChonoPlugin.kPluginName} created a " +
 						"zero-length annotation without an icon.");
 
+				// REVIEW: If/when https://github.com/ubsicap/paratext_demo_plugins/issues/18 is
+				// fixed, we need to go back to creating the appropriate verse number annotations.
+				if (Regex.IsMatch(selectedText, @"\\v \d+ "))
+				{
+					throw new NotImplementedException("Paratext can't currently handle verse number annotations.");
+					//return new[] { new TestScriptureSelection(reference, selectedText, "", "") }
+					//	.ToReadOnlyList();
+				}
+
 				IScriptureTextSelection sel = null;
 				var v = @"\v " + $"{reference.VerseNum} ";
 				switch (reference.BBBCCCVVV)
@@ -269,24 +286,29 @@ namespace SIL.Chono
 						}
 						break;
 					case 24001008:
-						if (selectedText == @"\v 8 ")
-							sel = new TestScriptureSelection(reference, selectedText, "", "", 1);
-						else if (selectedText == kJer1V8Lev1Quote)
+						if (selectedText == kJer1V8Lev1Quote)
 						{
 							sel = new TestScriptureSelection(reference, selectedText,
 								v, kJer1V8AfterQuote);
 						}
 						break;
 					case 40005004:
-						if (selectedText == @"\v 4 ")
-							sel = new TestScriptureSelection(reference, selectedText, "", "", 1);
-						else if (selectedText.EndsWith(kMat5V4Text))
+						if (selectedText.EndsWith(kMat5V4Text))
+							sel = new TestScriptureSelection(reference, selectedText, v, "");
+						break;
+					case 40006000:
+						if (selectedText.EndsWith(kMat6SectHead1To4QuoteNotClosed))
+						{
+							sel = new TestScriptureSelection(reference, selectedText,
+								kMat6SectHead1To4BeforeQuote, "", @"\c 6 \s ".Length);
+						}
+						break;
+					case 40007020:
+						if (selectedText.EndsWith(kMat7V20))
 							sel = new TestScriptureSelection(reference, selectedText, v, "");
 						break;
 					case 40022044:
-						if (selectedText == @"\v 44 ")
-							sel = new TestScriptureSelection(reference, selectedText, "", "", 1);
-						else if (selectedText.EndsWith(kMat22V44Line1SansLev1Cont))
+						if (selectedText.EndsWith(kMat22V44Line1SansLev1Cont))
 							sel = new TestScriptureSelection(reference, selectedText, v, "");
 						else
 						{
@@ -356,7 +378,13 @@ namespace SIL.Chono
 			{
 				IVerseRef verse;
 				var versification = new TestStandardVersification();
+				TestMarkerToken GetChapterTok(int chapter)
+				{
+					return new TestMarkerToken(new TestVerse(bookNum, chapter, 0, versification),
+						"c", chapter.ToString(NumberFormatInfo.InvariantInfo));
+				}
 				TestTokenBase lastTok = null; // Defined here for convenience. Used in several cases.
+
 				switch (bookNum)
 				{
 					case 24: // JER
@@ -415,27 +443,24 @@ namespace SIL.Chono
 									goto case 2;
 								break;
 							case 2:
-								verse = new TestVerse(bookNum, 2, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "2");
+								GetChapterTok(2);
 								if (chapterNum == 0)
 									goto case 3;
 								break;
 							case 3:
-								verse = new TestVerse(bookNum, 3, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "3");
+								GetChapterTok(3);
 								if (chapterNum == 0)
 									goto case 4;
 								break;
 							case 4:
-								verse = new TestVerse(bookNum, 4, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "4");
+								GetChapterTok(4);
 								if (chapterNum == 0)
 									goto case 5;
 								break;
 							case 5:
-								verse = new TestVerse(bookNum, 5, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "5");
-								foreach (var tok in GetVerses(verse,
+								lastTok = GetChapterTok(5);
+								yield return lastTok;
+								foreach (var tok in GetVerses(lastTok.VerseRef,
 									         "Seeing the crowds, he sat down and his disciples came to him. ",
 									         NewLine,
 									         "And he opened his mouth and taught them, saying: ",
@@ -448,15 +473,14 @@ namespace SIL.Chono
 									goto case 6;
 								break;
 							case 6:
-								verse = new TestVerse(bookNum, 6, 0, versification);
-								lastTok = new TestMarkerToken(verse, "c", "6");
-								yield return lastTok; 
-								lastTok = new TestMarkerToken(verse, "s", offset:lastTok.EndVerseOffset);
+								lastTok = GetChapterTok(6);
 								yield return lastTok;
-								lastTok = new TestTextToken(verse, kMat6SectHead1To4, lastTok.EndVerseOffset, false);
+								lastTok = new TestMarkerToken(lastTok.VerseRef, "s", offset:lastTok.EndVerseOffset);
+								yield return lastTok;
+								lastTok = new TestTextToken(lastTok.VerseRef, kMat6SectHead1To4, lastTok.EndVerseOffset, false);
 								yield return lastTok;
 								yield return new TestMarkerToken(lastTok, "p");
-								foreach (var tok in GetVerses(verse,
+								foreach (var tok in GetVerses(lastTok.VerseRef,
 									         Language.QuotationMarkInfo.PrimaryLevels.FirstOrDefault()?.Continuer +
 									         "Beware of showing off your righteousness, unless you want no reward from God. "))
 									yield return tok;
@@ -464,11 +488,10 @@ namespace SIL.Chono
 									goto case 7;
 								break;
 							case 7:
-								verse = new TestVerse(bookNum, 7, 0, versification);
-								lastTok = new TestMarkerToken(verse, "c", "7");
+								lastTok = GetChapterTok(7);
 								yield return lastTok;
 								yield return new TestMarkerToken(lastTok, "p");
-								foreach (var tok in GetVerses(verse,
+								foreach (var tok in GetVerses(lastTok.VerseRef,
 									         Language.QuotationMarkInfo.PrimaryLevels.FirstOrDefault()?.Continuer +
 									         "Judge not, that you be not judged. "))
 								{
@@ -477,19 +500,16 @@ namespace SIL.Chono
 								}
 
 								yield return new TestMarkerToken(lastTok, "p");
-								verse = new TestVerse(bookNum, 7, 20, versification);
-								lastTok = new TestMarkerToken(verse, "v", "20");
+								lastTok = new TestMarkerToken(new TestVerse(bookNum, 7, 20, versification), "v", "20");
 								yield return lastTok;
-								lastTok= new TestTextToken(verse,
-									"So you will know who they are by what comes out. ",
-									lastTok.EndVerseOffset);
+								lastTok = new TestTextToken(lastTok.VerseRef, kMat7V20, lastTok.EndVerseOffset);
 								yield return lastTok;
 								lastTok = new TestMarkerToken(lastTok, "s");
 								yield return lastTok;
-								lastTok = new TestTextToken(verse, kMat7SectHead21To23, lastTok.EndVerseOffset, false);
+								lastTok = new TestTextToken(lastTok.VerseRef, kMat7SectHead21To23, lastTok.EndVerseOffset, false);
 								yield return lastTok;
-								yield return new TestMarkerToken(lastTok, "p");
-								foreach (var tok in GetVerses(verse,
+								yield return new TestMarkerToken(lastTok.VerseRef, "p");
+								foreach (var tok in GetVerses(lastTok.VerseRef,
 									         "“Not all who say, ‘Lord, Lord,’ will enter heaven, just those who do God’s will. ",
 									         "Many will say, ‘Lord, Lord, did we not do our work in your name?’ ",
 									         kMat7V23Lev1Quote + kMat7V23Lev2Quote))
@@ -500,10 +520,10 @@ namespace SIL.Chono
 
 								lastTok = new TestMarkerToken(lastTok, "s");
 								yield return lastTok;
-								lastTok = new TestTextToken(verse, kMat7SectHead24To27, lastTok.EndVerseOffset, false);
+								lastTok = new TestTextToken(lastTok.VerseRef, kMat7SectHead24To27, lastTok.EndVerseOffset, false);
 								yield return lastTok;
 								yield return new TestMarkerToken(lastTok, "p");
-								foreach (var tok in GetVerses(verse,
+								foreach (var tok in GetVerses(lastTok.VerseRef,
 									         Language.QuotationMarkInfo.PrimaryLevels.FirstOrDefault()?.Continuer +
 									         kMat7V24SansCont,
 											 "A big storm could not topple it because it was founded on rock. ",
@@ -516,99 +536,83 @@ namespace SIL.Chono
 									goto case 8;
 								break;
 							case 8:
-								verse = new TestVerse(bookNum, 8, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "8");
+								GetChapterTok(8);
 								if (chapterNum == 0)
 									goto case 9;
 								break;
 							case 9:
-								verse = new TestVerse(bookNum, 9, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "9");
+								GetChapterTok(9);
 								if (chapterNum == 0)
 									goto case 10;
 								break;
 							case 10:
-								verse = new TestVerse(bookNum, 10, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "10");
+								GetChapterTok(10);
 								if (chapterNum == 0)
 									goto case 11;
 								break;
 							case 11:
-								verse = new TestVerse(bookNum, 11, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "11");
+								GetChapterTok(11);
 								if (chapterNum == 0)
 									goto case 12;
 								break;
 							case 12:
-								verse = new TestVerse(bookNum, 12, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "12");
+								GetChapterTok(12);
 								if (chapterNum == 0)
 									goto case 13;
 								break;
 							case 13:
-								verse = new TestVerse(bookNum, 13, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "13");
+								GetChapterTok(13);
 								if (chapterNum == 0)
 									goto case 14;
 								break;
 							case 14:
-								verse = new TestVerse(bookNum, 14, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "14");
+								GetChapterTok(14);
 								if (chapterNum == 0)
 									goto case 15;
 								break;
 							case 15:
-								verse = new TestVerse(bookNum, 15, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "15");
+								GetChapterTok(15);
 								if (chapterNum == 0)
 									goto case 16;
 								break;
 							case 16:
-								verse = new TestVerse(bookNum, 16, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "16");
+								GetChapterTok(16);
 								if (chapterNum == 0)
 									goto case 17;
 								break;
 							case 17:
-								verse = new TestVerse(bookNum, 17, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "17");
+								GetChapterTok(17);
 								if (chapterNum == 0)
 									goto case 18;
 								break;
 							case 18:
-								verse = new TestVerse(bookNum, 18, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "18");
+								GetChapterTok(18);
 								if (chapterNum == 0)
 									goto case 19;
 								break;
 							case 19:
-								verse = new TestVerse(bookNum, 19, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "19");
+								GetChapterTok(19);
 								if (chapterNum == 0)
 									goto case 20;
 								break;
 							case 20:
-								verse = new TestVerse(bookNum, 20, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "20");
+								GetChapterTok(20);
 								if (chapterNum == 0)
 									goto case 21;
 								break;
 							case 21:
-								verse = new TestVerse(bookNum, 21, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "21");
+								GetChapterTok(21);
 								if (chapterNum == 0)
 									goto case 22;
 								break;
 							case 22:
-								verse = new TestVerse(bookNum, 22, 0, versification);
-								lastTok = new TestMarkerToken(verse, "c", "22");
+								lastTok = GetChapterTok(22);
 								yield return lastTok;
 								yield return new TestMarkerToken(lastTok, "p");
-								verse = new TestVerse(bookNum, 22, 40, versification);
-								foreach (var tok in GetVerses(verse,
-									         "While the Pharisees were together, Jesus questioned them, ",
-									         "saying, “Whose son is the Christ?” They replied, “The son of David.” ",
-									         "He said to them, “Why does David call him Lord, saying, "))
+								foreach (var tok in GetVerses(new TestVerse(bookNum, 22, 40, versification),
+							         "While the Pharisees were together, Jesus questioned them, ",
+							         "saying, “Whose son is the Christ?” They replied, “The son of David.” ",
+							         "He said to them, “Why does David call him Lord, saying, "))
 								{
 									lastTok = tok;
 									yield return tok;
@@ -627,29 +631,28 @@ namespace SIL.Chono
 						{
 							case 0:
 							case 1:
-								verse = new TestVerse(bookNum, 1, 0, versification);
-								lastTok = new TestMarkerToken(verse, "id", "JHN");
+								lastTok = new TestMarkerToken(
+									new TestVerse(bookNum, 1, 0, versification), "id", "JHN");
 								yield return lastTok;
-								yield return new TestMarkerToken(verse, "c", "1", lastTok.EndVerseOffset);
+								yield return new TestMarkerToken(lastTok.VerseRef, "c", "1",
+									lastTok.EndVerseOffset);
 								if (chapterNum == 0)
 									goto case 2;
 								break;
 							case 2:
-								verse = new TestVerse(bookNum, 2, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "2");
+								GetChapterTok(2);
 								if (chapterNum == 0)
 									goto case 3;
 								break;
 							case 3:
-								verse = new TestVerse(bookNum, 3, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "3");
+								GetChapterTok(3);
 								if (chapterNum == 0)
 									goto case 4;
 								break;
 							case 4:
-								verse = new TestVerse(bookNum, 4, 0, versification);
-								yield return new TestMarkerToken(verse, "c", "4");
-								foreach (var tok in GetVerses(verse,
+								lastTok = GetChapterTok(4);
+								yield return lastTok;
+								foreach (var tok in GetVerses(lastTok.VerseRef,
 									         "Now Jesus learned that the Pharisees knew he was baptizing more disciples than John— ",
 									         "although in fact it was not Jesus who baptized, but his disciples. ",
 									         "So he left Judea and went back once more to Galilee. ",
@@ -1027,24 +1030,28 @@ namespace SIL.Chono
 			var annotations = sut.GetAnnotations(verse, @"\v 44 " + @"\q1 " + line1Text +
 				@"\q2 " + line2Text + @"\q2 " + line3Text + TestProject.kMat22V44Line3AfterQuote);
 
-			// The first annotation is for the verse number itself.
-			Assert.That(annotations.Count, Is.EqualTo(5));
-			Assert.That(annotations[0].ScriptureSelection.Offset, Is.EqualTo(1));
-			Assert.That(annotations[0].ScriptureSelection.SelectedText,
-				Is.EqualTo(@"\v 44 "));
-			Assert.That(annotations[0].StyleName, Is.AnyOf("quote1", "quote2"));
-			Assert.That(annotations[1].ScriptureSelection.SelectedText,
+			Assert.That(annotations.Count, Is.EqualTo(4 + kNumberOfAnnotationsForAVerseNumber));
+			if (kNumberOfAnnotationsForAVerseNumber > 0)
+			{
+				Assert.That(annotations[0].ScriptureSelection.SelectedText,
+					Is.EqualTo(@"\v 44 "));
+				Assert.That(annotations[0].StyleName, Is.AnyOf("quote1", "quote2"));
+			}
+
+			var i = kNumberOfAnnotationsForAVerseNumber;
+			Assert.That(annotations[i].ScriptureSelection.SelectedText,
 				Is.EqualTo(line1Text));
-			Assert.That(annotations[1].StyleName, Is.EqualTo("quote2"));
-			Assert.That(annotations[2].ScriptureSelection.SelectedText,
+			Assert.That(annotations[i].StyleName, Is.EqualTo("quote2"));
+			Assert.That(annotations[++i].ScriptureSelection.SelectedText,
 				Is.EqualTo(line2Text));
-			Assert.That(annotations[2].StyleName, Is.EqualTo("quote3"));
-			Assert.That(annotations[3].ScriptureSelection.SelectedText,
+			Assert.That(annotations[i].StyleName, Is.EqualTo("quote3"));
+			Assert.That(annotations[++i].ScriptureSelection.SelectedText,
 				Is.EqualTo(line3Text));
-			Assert.That(annotations[3].StyleName, Is.EqualTo("quote3"));
-			Assert.That(annotations[4].ScriptureSelection.SelectedText,
+			Assert.That(annotations[i].StyleName, Is.EqualTo("quote3"));
+			Assert.That(annotations[++i].ScriptureSelection.SelectedText,
 				Is.EqualTo(TestProject.kMat22V44Line3AfterQuote));
-			Assert.That(annotations[4].StyleName, Is.EqualTo("quote1"));
+			Assert.That(annotations[i].StyleName, Is.EqualTo("quote1"));
+
 			foreach (var annotation in annotations)
 				VerifyPluginAnnotation(annotation, project, verse);
 		}
@@ -1066,12 +1073,15 @@ namespace SIL.Chono
 			var annotations = sut.GetAnnotations(verse,
 				@"\v 8 " + TestProject.kJer1V8Lev1Quote + TestProject.kJer1V8AfterQuote);
 
-			// The first annotation is for the verse number itself.
-			Assert.That(annotations.Count, Is.EqualTo(2));
-			Assert.That(annotations[0].ScriptureSelection.Offset, Is.EqualTo(1));
-			Assert.That(annotations[0].ScriptureSelection.SelectedText,
-				Is.EqualTo(@"\v 8 "));
-			Assert.That(annotations[1].ScriptureSelection.SelectedText,
+			Assert.That(annotations.Count, Is.EqualTo(1 + kNumberOfAnnotationsForAVerseNumber));
+			if (kNumberOfAnnotationsForAVerseNumber > 0)
+			{
+				Assert.That(annotations[0].ScriptureSelection.SelectedText,
+					Is.EqualTo(@"\v 8 "));
+			}
+
+			var i = kNumberOfAnnotationsForAVerseNumber;
+			Assert.That(annotations[i].ScriptureSelection.SelectedText,
 				Is.EqualTo(TestProject.kJer1V8Lev1Quote));
 
 			foreach (var annotation in annotations)
@@ -1087,16 +1097,56 @@ namespace SIL.Chono
 			var quoteInfo = GetQuoteInfo(3, Continuers.RepeatAllOpeners);
 			var project = new TestProject(quoteInfo);
 			var sut = new AnnotationSource(null, project);
-			Assert.Ignore("Write this test");
+			var verse = new TestVerse(40, 7, 20);
+			var annotations = sut.GetAnnotations(verse,
+				@"\v 20 " + TestProject.kMat7V20 + @"\s " + TestProject.kMat7SectHead21To23);
+
+			Assert.That(annotations.Count, Is.EqualTo(1 + kNumberOfAnnotationsForAVerseNumber));
+			if (kNumberOfAnnotationsForAVerseNumber > 0)
+			{
+				Assert.That(annotations[0].ScriptureSelection.SelectedText,
+					Is.EqualTo(@"\v 20 "));
+			}
+
+			var i = kNumberOfAnnotationsForAVerseNumber;
+			Assert.That(annotations[i].ScriptureSelection.SelectedText,
+				Is.EqualTo(TestProject.kMat7V20));
+
+			foreach (var annotation in annotations)
+			{
+				VerifyPluginAnnotation(annotation, project, verse);
+				Assert.That(annotation.StyleName, Is.EqualTo("quote1"));
+			}
 		}
 		
 		[Test]
-		public void GetAnnotations_SectionHeadWithQuoteInMiddleOfQuote_SectionHeadNotAnnotated()
+		public void GetAnnotations_SectionHeadWithQuoteInMiddleOfQuote_SectionHeadQuoteAnnotatedSeparately()
 		{
 			var quoteInfo = GetQuoteInfo(3, Continuers.RepeatAllOpeners);
 			var project = new TestProject(quoteInfo);
 			var sut = new AnnotationSource(null, project);
-			Assert.Ignore("Write this test");
+
+			var annotationBefore = sut.GetAnnotations(new TestVerse(40, 5, 4),
+				@"\v 4 " + quoteInfo.PrimaryLevels[0].Continuer + TestProject.kMat5V4Text).Last();
+
+			var verse = new TestVerse(40, 6, 0);
+			var annotation = sut.GetAnnotations(verse,
+				@"\c 6 \s " + TestProject.kMat6SectHead1To4).Single();
+
+			Assert.That(annotationBefore.StyleName, Is.Not.EqualTo(annotation.StyleName));
+
+			Assert.That(annotation.ScriptureSelection.SelectedText,
+				Is.EqualTo(TestProject.kMat6SectHead1To4QuoteNotClosed));
+
+			VerifyPluginAnnotation(annotation, project, verse);
+			Assert.That(annotation.StyleName,
+				Is.EqualTo(AnnotationSource.kNonScrQuoteStylePrefix + "1"));
+
+			var annotationAfter = sut.GetAnnotations(new TestVerse(40, 6, 1),
+				@"\v 1 " + quoteInfo.PrimaryLevels[0].Continuer + 
+				"Beware of showing off your righteousness...").First();
+
+			Assert.That(annotationBefore.StyleName, Is.EqualTo(annotationAfter.StyleName));
 		}
 		
 		[Test]
@@ -1121,12 +1171,15 @@ namespace SIL.Chono
 			var annotations = sut.GetAnnotations(verse,
 				@"\v 4 " + quoteInfo.PrimaryLevels[0].Continuer + TestProject.kMat5V4Text);
 
-			// The first annotation is for the verse number itself.
-			Assert.That(annotations.Count, Is.EqualTo(2));
-			Assert.That(annotations[0].ScriptureSelection.Offset, Is.EqualTo(1));
-			Assert.That(annotations[0].ScriptureSelection.SelectedText,
-				Is.EqualTo(@"\v 4 "));
-			Assert.That(annotations[1].ScriptureSelection.SelectedText,
+			Assert.That(annotations.Count, Is.EqualTo(1 + kNumberOfAnnotationsForAVerseNumber));
+			if (kNumberOfAnnotationsForAVerseNumber > 0)
+			{
+				Assert.That(annotations[0].ScriptureSelection.SelectedText,
+					Is.EqualTo(@"\v 4 "));
+			}
+
+			var i = kNumberOfAnnotationsForAVerseNumber;
+			Assert.That(annotations[i].ScriptureSelection.SelectedText,
 				Is.EqualTo(quoteInfo.PrimaryLevels[0].Continuer + TestProject.kMat5V4Text));
 
 			foreach (var annotation in annotations)

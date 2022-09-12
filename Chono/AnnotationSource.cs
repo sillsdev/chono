@@ -273,13 +273,14 @@ namespace SIL.Chono
 	                {
 		                if (markerTok.Marker == "v")
 		                {
-			                if (currentQuoteLevel[tok.IsScripture] > 0)
-			                {
-				                annotations.Add(new Annotation(new Selection($"\\v {markerTok.Data} ",
-						                "", "", tok.VerseRef, 1),
-					                currentQuoteLevel[true]));
-			                }
-		                }
+							// See https://github.com/ubsicap/paratext_demo_plugins/issues/18
+							//if (currentQuoteLevel[tok.IsScripture] > 0)
+							//{
+							//	annotations.Add(new Annotation(new Selection($"\\v {markerTok.Data} ",
+							//			"", "", tok.VerseRef, 1),
+							//		currentQuoteLevel[true]));
+							//}
+						}
 		                else if (markerTok.Type == MarkerType.Paragraph)
 						{
 							atParaStart = true;
