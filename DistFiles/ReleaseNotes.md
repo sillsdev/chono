@@ -1,2 +1,2 @@
-﻿## 0.1 14 January 2021
-* First release of Chono as a Paratext plugin.
+﻿## 0.1 03 October 2022
+* First release of Quotelighter as a Paratext plugin.

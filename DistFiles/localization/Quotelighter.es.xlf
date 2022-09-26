@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns:sil="http://sil.org/software/XLiff" xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="en" product-version="1.5.7" original="Transcelerator.dll" datatype="plaintext" target-language="es-ES">
+    <body>
+      <trans-unit id="Info.CopyrightFmt">
+        <source xml:lang="en">{0}. Distributable under the terms of the MIT License.</source>
+        <note>ID: Info.CopyrightFmt</note>
+        <note>Param is copyright information. This is display in the Help/About box and the splash screen</note>
+        <target xml:lang="es-ES" state="translated">{0}. Distribuible bajo los términos de la licencia MIT.</target>
+      </trans-unit>
+      <trans-unit id="Common.OK">
+        <source xml:lang="en">OK</source>
+        <note>ID: Common.OK</note>
+        <target xml:lang="es-ES" state="translated">OK</target>
+      </trans-unit>
+      <trans-unit id="General.ErrorStarting">
+        <source xml:lang="en">Error occurred attempting to start {0}: </source>
+        <note>ID: General.ErrorStarting</note>
+        <note>Param is "Quotelighter" (plugin name)</note>
+        <target xml:lang="es-ES" state="translated">Ocurrió un error al intentar iniciar {0}: </target>
+      </trans-unit>
+      <trans-unit id="HelpAboutDlg.WindowTitle">
+        <source xml:lang="en">About Quotelighter</source>
+        <note>ID: HelpAboutDlg.WindowTitle</note>
+        <target xml:lang="es-ES" state="translated">Acerca de Quotelighter</target>
+      </trans-unit>
+      <trans-unit id="HelpAboutDlg.m_linkLabelReleaseNotes">
+        <source xml:lang="en">Release notes...</source>
+        <note>ID: HelpAboutDlg.m_linkLabelReleaseNotes</note>
+        <target xml:lang="es-ES" state="translated">Notas de la versión (inglés)...</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.Menu.File">
+        <source xml:lang="en">&amp;File</source>
+        <note>ID: MainWindow.Menu.File</note>
+        <note>To control which character will be the mnemonic key (underlined when the user presses the ALT key), put the ampersand before the desired character.</note>
+        <target xml:lang="es-ES" state="translated">&amp;Archivo</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.Menu.File.Close">
+        <source xml:lang="en">&amp;Close</source>
+        <note>ID: MainWindow.Menu.File.Close</note>
+        <note>To control which character will be the mnemonic key (underlined when the user presses the ALT key), put the ampersand before the desired character.</note>
+        <target xml:lang="es-ES" state="translated">&amp;Cerrar</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.Menu.Help">
+        <source xml:lang="en">&amp;Help</source>
+        <note>ID: MainWindow.Menu.Help</note>
+        <note>To control which character will be the mnemonic key (underlined when the user presses the ALT key), put the ampersand before the desired character.</note>
+        <target xml:lang="es-ES" state="translated">&amp;Ayuda</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.Menu.Help.About">
+        <source xml:lang="en">&amp;About Quotelighter</source>
+        <note>ID: MainWindow.Menu.Help.About</note>
+        <note>To control which character will be the mnemonic key (underlined when the user presses the ALT key), put the ampersand before the desired character.</note>
+        <target xml:lang="es-ES" state="translated">&amp;Acerca de Quotelighter</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.Menu.View">
+        <source xml:lang="en">&amp;View</source>
+        <note>ID: MainWindow.Menu.View</note>
+        <note>To control which character will be the mnemonic key (underlined when the user presses the ALT key), put the ampersand before the desired character.</note>
+        <target xml:lang="es-ES" state="translated">&amp;Ver</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.Menu.View.DisplayLanguage">
+        <source xml:lang="en">&amp;Display Language</source>
+        <note>ID: MainWindow.Menu.View.DisplayLanguage</note>
+        <note>To control which character will be the mnemonic key (underlined when the user presses the ALT key), put the ampersand before the desired character.</note>
+        <target xml:lang="es-ES" state="translated">&amp;Idioma de interfaz</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.Menu.View.Toolbar">
+        <source xml:lang="en">&amp;Toolbar</source>
+        <note>ID: MainWindow.Menu.View.Toolbar</note>
+        <note>To control which character will be the mnemonic key (underlined when the user presses the ALT key), put the ampersand before the desired character.</note>
+        <target xml:lang="es-ES" state="translated">&amp;Barra de herramientas</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.toolStripMenuItem1">
+        <source xml:lang="en">&amp;More...</source>
+        <note>ID: MainWindow.toolStripMenuItem1</note>
+        <target xml:lang="es-ES" state="translated">&amp;Más...</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.btnReceiveScrReferences">
+        <source xml:lang="en">Receive Scripture References</source>
+        <note>ID: MainWindow.btnReceiveScrReferences</note>
+        <target xml:lang="es-ES" state="translated">Recibir citas bíblicas</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.btnReceiveScrReferences_ToolTip_">
+        <source xml:lang="en">Receive Scripture References</source>
+        <note>ID: MainWindow.btnReceiveScrReferences_ToolTip_</note>
+        <target xml:lang="es-ES" state="translated">Recibir citas bíblicas</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.btnSendScrReferences">
+        <source xml:lang="en">Send Scripture References</source>
+        <note>ID: MainWindow.btnSendScrReferences</note>
+        <target xml:lang="es-ES" state="translated">Enviar citas bíblicas</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.btnSendScrReferences_ToolTip_">
+        <source xml:lang="en">Send Scripture References</source>
+        <note>ID: MainWindow.btnSendScrReferences_ToolTip_</note>
+        <target xml:lang="es-ES" state="translated">Enviar citas bíblicas</target>
+      </trans-unit>
+      <trans-unit id="MoreUiLanguagesDlg.Download">
+        <source xml:lang="en">Download the latest Installer.</source>
+        <note>ID: MoreUiLanguagesDlg.Download</note>
+        <note>Sentence that will be formatted as a hyperlink and appended to "MoreUiLanguagesDlg.m_linkLabelAddDisplayLanguageUsingInstaller"</note>
+        <target xml:lang="es-ES" state="translated">Descargue el último instalador.</target>
+      </trans-unit>
+      <trans-unit id="MoreUiLanguagesDlg.WindowTitle">
+        <source xml:lang="en">More Display Languages</source>
+        <note>ID: MoreUiLanguagesDlg.WindowTitle</note>
+        <target xml:lang="es-ES" state="translated">Mostrar en otros idiomas</target>
+      </trans-unit>
+      <trans-unit id="MoreUiLanguagesDlg.m_linkLabelAddDisplayLanguageUsingInstaller">
+        <source xml:lang="en">If the language you would like to see is not available on the {0} menu, use the latest Installer to see if it is available to select.</source>
+        <note>ID: MoreUiLanguagesDlg.m_linkLabelAddDisplayLanguageUsingInstaller</note>
+        <note>Param is the name (as localized) of the "Display Language" menu</note>
+        <target xml:lang="es-ES" state="translated">Si el idioma que desea ver no está disponible en el menú {0}, utilice el último instalador para ver si está disponible para seleccionar.</target>
+      </trans-unit>
+      <trans-unit id="MoreUiLanguagesDlg.m_linkLabelCrowdinInformation">
+        <source xml:lang="en">{0} uses {1} to manage the localization effort for strings displayed in its user interface and for the source questions to be translated. If you would like to contribute translations or request the addition of another display language, please make your request via {1}.</source>
+        <note>ID: MoreUiLanguagesDlg.m_linkLabelCrowdinInformation</note>
+        <note>Param 0: "Quotelighter" (plugin name); Param 1: "Crowdin" (website) - will be formatted as a hyperlink to crowdin.com</note>
+        <target xml:lang="es-ES" state="translated">{0} usa {1} para administrar el esfuerzo de localización de las cadenas mostradas en su interfaz de usuario y para traducir las preguntas de origen. Si desea contribuir con las traducciones o solicitar la adición de otro idioma de visualización, por favor haga su solicitud a través de {1}.</target>
+      </trans-unit>
+      <trans-unit id="SplashScreen.MsgInitializing">
+        <source xml:lang="en">Initializing...</source>
+        <note>ID: SplashScreen.MsgInitializing</note>
+        <target xml:lang="es-ES" state="translated">Inicializando...</target>
+      </trans-unit>
+      <trans-unit id="SplashScreen.MsgRetrievingDataFromCaller">
+        <source xml:lang="en">Retrieving data from {0}...</source>
+        <note>ID: SplashScreen.MsgRetrievingDataFromCaller</note>
+        <note>Param is host application name (Paratext)</note>
+        <target xml:lang="es-ES" state="translated">Obteniendo datos del {0}...</target>
+      </trans-unit>
+      <trans-unit id="TxlInfo.m_lblAppVersion">
+        <source xml:lang="en">Version {0}</source>
+        <note>ID: TxlInfo.m_lblAppVersion</note>
+        <target xml:lang="es-ES" state="translated">Versión {0}</target>
+      </trans-unit>
+      <trans-unit id="TxlInfo.m_lblCopyright">
+        <source xml:lang="en">(C) 2021, SIL International.</source>
+        <note>ID: TxlInfo.m_lblCopyright</note>
+        <target xml:lang="es-ES" state="translated">(C) 2021, SIL Internacional.</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

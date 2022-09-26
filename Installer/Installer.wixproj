@@ -5,7 +5,7 @@
     <ProductVersion>1.0</ProductVersion>
     <ProjectGuid>{F7978340-6AA8-4A53-8DF4-310D2F2FAF70}</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
-    <OutputName>ChonoInstaller</OutputName>
+    <OutputName>QuotelighterInstaller</OutputName>
     <OutputType>Package</OutputType>
 	<DefineSolutionProperties>false</DefineSolutionProperties>
   </PropertyGroup>
