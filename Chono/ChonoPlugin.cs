@@ -223,7 +223,18 @@ namespace SIL.Chono
 			ErrorReport.AddProperty("Plugin Name", kPluginName);
 			ErrorReport.AddProperty("Version", $"{Version} (apparent build date: {buildDate})");
 			ErrorReport.AddProperty("Host Application", m_host.ApplicationName + " " + m_host.ApplicationVersion);
-			ExceptionHandler.Init(new WinFormsExceptionHandler(false));
+			try
+			{
+				ExceptionHandler.Init(new WinFormsExceptionHandler(false));
+			}
+			catch (InvalidOperationException)
+			{
+				// Probably a different plugin already set this.
+				// ENHANCE: Upgrade SIL.ErrorReporting to be able to check
+				// ExceptionHandler.TypeOfExistingHandler to deal with this more gracefully.
+				// See https://github.com/sillsdev/libpalaso/pull/1223
+
+			}
 		}
 
 		public IDataFileMerger GetMerger(IPluginHost host, string dataIdentifier) => null;

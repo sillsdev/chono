@@ -251,74 +251,95 @@ namespace SIL.Chono
 
                 var currentQuoteLevel = startingQuoteLevel;
                 var annotations = new List<IPluginAnnotation>();
-                foreach (var textTok in m_project.GetUSFMTokens(bookNum, c)
-	                .OfType<IUSFMTextToken>().Where(tok => tok.IsScripture))
+                bool atParaStart = false;
+                foreach (var tok in m_project.GetUSFMTokens(bookNum, c).Where(t => t.IsScripture))
                 {
-	                var text = textTok.Text;
-	                int start = 0, end = 0;
-	                bool opener = false;
-
-	                void AddAnnotation(Capture capture, bool openingNestedQuote = false)
+	                if (tok is IUSFMMarkerToken markerTok)
 	                {
-		                var cCaptureCharsIncludedInSelection = (openingNestedQuote ? 0 : capture.Length);
-		                annotations.Add(new Annotation(
-			                new Selection(
-				                text.Substring(start, capture.Index + cCaptureCharsIncludedInSelection - start),
-				                text.Substring(0, start),
-				                text.Substring(capture.Index + cCaptureCharsIncludedInSelection),
-				                textTok.VerseRef,
-				                textTok.VerseOffset + start),
-			                kQuoteStylePrefix + currentQuoteLevel));
+						if (currentQuoteLevel > 0 && markerTok.Marker == "v")
+						{
+							annotations.Add(new Annotation(new Selection(markerTok.Data, "", "", tok.VerseRef),
+								kQuoteStylePrefix + currentQuoteLevel));
+						}
+						else if (markerTok.Type == MarkerType.Paragraph)
+							atParaStart = true;
 	                }
-
-	                foreach (Match match in m_findMarksRegex.Matches(text))
+					else if (tok is IUSFMTextToken textTok)
 	                {
-		                string validMatchLevels = null;
-		                foreach (Group matchGroup in match.Groups)
+		                var text = textTok.Text;
+		                int start = 0;
+		                var continuer = false;
+
+		                void AddAnnotation(Capture capture, bool openingNestedQuote = false)
 		                {
-			                if (matchGroup.Success)
+			                var cCaptureCharsIncludedInSel = 
+				                (openingNestedQuote ? 0 : capture.Length);
+			                annotations.Add(new Annotation(
+				                new Selection(
+					                text.Substring(start,
+						                capture.Index + cCaptureCharsIncludedInSel - start),
+					                text.Substring(0, start),
+					                text.Substring(capture.Index + cCaptureCharsIncludedInSel),
+					                textTok.VerseRef,
+					                textTok.VerseOffset + start),
+				                kQuoteStylePrefix + currentQuoteLevel));
+		                }
+
+		                foreach (Match match in m_findMarksRegex.Matches(text))
+		                {
+							// We skip the first one, which is always "0".
+			                foreach (var matchGroup in match.SuccessfulMatchGroups().Skip(1))
 			                {
 				                if (matchGroup.Name.StartsWith(kRgxOpenLevelGroupPrefix))
 				                {
-					                opener = true;
-					                validMatchLevels = matchGroup.Name.Substring(3);
+					                var validMatchLevels = matchGroup.Name.Substring(3);
+					                var index = validMatchLevels.IndexOf(currentQuoteLevel.ToString(),
+						                StringComparison.Ordinal);
+					                if (index >= 0)
+					                {
+						                if (currentQuoteLevel > 0)
+						                {
+							                continuer = atParaStart && index > 0;
+											if (!continuer)
+												AddAnnotation(match, true);
+						                }
+
+						                start = match.Index;
+										if (!continuer)
+											currentQuoteLevel++;
+					                }
 					                break;
 				                }
 
 				                if (matchGroup.Name.StartsWith(kRgxCloserGroupPrefix))
 				                {
-					                opener = false;
-					                validMatchLevels = matchGroup.Name.Substring(3);
+					                var validMatchLevels = matchGroup.Name.Substring(3);
+					                if (validMatchLevels.Contains(currentQuoteLevel.ToString()))
+					                {
+						                AddAnnotation(match);
+						                if (--currentQuoteLevel > 0)
+							                start = match.Index + match.Length;
+					                }
 					                break;
 				                }
-                                if (matchGroup.Name == kRgxFinalGroup && currentQuoteLevel > 0)
-                                {
-                                    AddAnnotation(match);
-	                                break;
-                                }
-			                }
-		                }
 
-		                if (validMatchLevels != null && validMatchLevels.Contains(currentQuoteLevel.ToString()))
-		                {
-			                if (opener)
-			                {
-                                if (currentQuoteLevel > 0)
-	                                AddAnnotation(match, true);
-				                start = match.Index;
-				                currentQuoteLevel++;
-			                }
-			                else
-			                {
-                                AddAnnotation(match);
-                                if (--currentQuoteLevel > 0)
-	                                start = match.Index + match.Length;
-			                }
+				                if (matchGroup.Name == kRgxFinalGroup && currentQuoteLevel > 0)
+				                {
+					                AddAnnotation(match);
+					                break;
+				                }
+			                
+							}
+
+			                atParaStart = false;
 		                }
+		                
+		                atParaStart = false;
 	                }
                 }
 
-                m_currentBookAnnotations[c] = new ChapterAnnotationInfo(annotations, currentQuoteLevel, startingQuoteLevel);
+                m_currentBookAnnotations[c] = new ChapterAnnotationInfo(annotations,
+	                currentQuoteLevel, startingQuoteLevel);
 
                 startingQuoteLevel = currentQuoteLevel;
             }
@@ -353,7 +374,7 @@ namespace SIL.Chono
         private sealed class Selection : IScriptureTextSelection
         {
             public Selection(string selectedText, string beforeContext, string afterContext,
-                IVerseRef verseRef, int offset)
+                IVerseRef verseRef, int offset = 0)
             {
                 SelectedText = selectedText;
                 BeforeContext = beforeContext;
