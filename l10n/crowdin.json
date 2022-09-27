@@ -1,11 +1,11 @@
 {
-  "project_identifier": "chono",
-  "api_key_env": "CROWDIN_CHONO_KEY",
+  "project_identifier": "quotelighter",
+  "api_key_env": "CROWDIN_QUOTELIGHTER_KEY",
   "base_path": ".",
   "files": [
     {
-      "source": "Chono.en.xlf",
-      "translation": "%local%/Chono.%locale%.xlf",
+      "source": "Quotelighter.en.xlf",
+      "translation": "%local%/Quotelighter.%locale%.xlf",
     }
   ]
 }

@@ -22,11 +22,11 @@ using SIL.Windows.Forms.LocalizationIncompleteDlg;
 using SIL.Windows.Forms.Reporting;
 using static System.String;
 
-namespace SIL.Chono
+namespace SIL.Quotelighter
 {
-	public class ChonoPlugin : IParatextScrTextAnnotationPlugin, IParatextWindowPlugin
+	public class QuotelighterPlugin : IParatextScrTextAnnotationPlugin, IParatextWindowPlugin, IRestrictedResourceAccess
 	{
-		public const string kPluginName = "Chono";
+		public const string kPluginName = "Quotelighter";
 		public const string kDefaultUILocale = "en";
 
 		// TODO: Set up project-specific email (unless we want to keep this under Glyssen?)
@@ -44,17 +44,17 @@ namespace SIL.Chono
 		public string VersionString => Version.ToString();
 		public string Publisher => "SIL International";
 
-		public ChonoPlugin(IPluginHost host)
+		public QuotelighterPlugin(IPluginHost host)
 		{
 			m_host = host;
 			var assembly = Assembly.GetExecutingAssembly();
 			m_baseInstallFolder = Path.GetDirectoryName(assembly.Location);
-			InitializeErrorHandling(ChonoInfo.GetBuildDate(assembly));
+			InitializeErrorHandling(QuotelighterInfo.GetBuildDate(assembly));
 			Version = assembly.GetName().Version;
 			var attributes = assembly.GetCustomAttributes(typeof(AssemblyCompanyAttribute), false);
 			m_company = attributes.Length == 0 ? "SIL" : ((AssemblyCompanyAttribute)attributes[0]).Company;
 
-			// TODO set up analytics for Chono
+			// TODO set up analytics for Quotelighter
 //#if DEBUG
 //			// Always track if this is a debug build, but track to a different segment.io project
 //			const bool allowTracking = true;
@@ -155,11 +155,11 @@ namespace SIL.Chono
 			// but not the other. Normally, part of the creation process for a LM is to check to
 			// see whether the requested language is available. But if the first LM we create does
 			// not have the requested language, the user sees a dialog box alerting them to that
-			// and requiring them to choose a different language. For now, in Chono, we
+			// and requiring them to choose a different language. For now, in Quotelighter, we
 			// can work around that by creating the Palaso LM first, since its set of available
-			// languages is a superset of the languages available for Chono. But it feels weird
-			// not to create the primary LM first, and the day could come where neither set of
-			// languages is a superset, and then this strategy wouldn't work.
+			// languages is a superset of the languages available for Quotelighter. But it feels
+			// weird not to create the primary LM first, and the day could come where neither set
+			// of languages is a superset, and then this strategy wouldn't work.
 			LocalizationManager.Create(TranslationMemory.XLiff,
 				desiredUiLangId, "Palaso", "SIL Shared Strings", VersionString, installedStringFileFolder,
 				relativeSettingPathForLocalizationFolder, icon, kEmailAddress,
@@ -168,9 +168,9 @@ namespace SIL.Chono
 			var primaryMgr = LocalizationManager.Create(TranslationMemory.XLiff, 
 				desiredUiLangId, kPluginName, kPluginName, VersionString, installedStringFileFolder,
 				relativeSettingPathForLocalizationFolder, icon, kEmailAddress,
-				"SIL.Chono", "SIL.Utils");
+				"SIL.Quotelighter", "SIL.Utils");
 
-			LocIncompleteViewModel = new LocalizationIncompleteViewModel(primaryMgr, "chono",
+			LocIncompleteViewModel = new LocalizationIncompleteViewModel(primaryMgr, "quotelighter",
 				IssueRequestForLocalization);
 		}
 
@@ -191,21 +191,21 @@ namespace SIL.Chono
 
 		public string GetDescription(string locale)
 		{
-			return LocalizationManager.GetString("Chono.Description",
-				"Helps apply Glyssen biblical character names to quotes",
+			return LocalizationManager.GetString("Quotelighter.Description",
+				"Highlights quote levels and helps apply Glyssen biblical character names to quotes",
 				"This will be requested using the current Paratext UI locale",
 				new [] {locale, LocalizationManager.UILanguageId}, out _);
 		}
 
 		public string GetHighlightQuotationsMenuName(string locale = null)
 		{
-			return LocalizationManager.GetString("Chono.HighlightQuoteLevelsMenu",
+			return LocalizationManager.GetString("Quotelighter.HighlightQuoteLevelsMenu",
 				"Highlight quotation levels", null, GetLocalesToRequest(locale), out _);
 		}
 
 		public string GetShowSpeakersMenuName(string locale = null)
 		{
-			return LocalizationManager.GetString("Chono.ShowWhoSpeaksInVerseMenu",
+			return LocalizationManager.GetString("Quotelighter.ShowWhoSpeaksInVerseMenu",
 				"Show speaking characters", null, GetLocalesToRequest(locale), out _);
 		}
 
@@ -244,5 +244,8 @@ namespace SIL.Chono
 		}
 
 		public IDataFileMerger GetMerger(IPluginHost host, string dataIdentifier) => null;
+
+		public string ResourceAccessToken =>
+			"JcVFKQDMrU/r1FDBQa4azYzU7j6ULwZMnVmWaWwMU8RpfKu9lB8okhgJqjnbGLg5RVp95+J/HR1cVKk7YMYIPOAGLm8vU5EPmOVtHnM52VfPmQYdxyaTLubWu6b7ct3L1LveZYHV4xRucjknF5/pT/2W30ee+4/TsPo1usiAQ94=";
 	}
 }

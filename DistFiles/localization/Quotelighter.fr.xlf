@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns:sil="http://sil.org/software/XLiff" xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="en" product-version="1.5.0.0" original="Quotelighter.dll" datatype="plaintext" target-language="fr">
+    <body>
+      <trans-unit id="Common.OK">
+        <source xml:lang="en">OK</source>
+        <note>ID: Common.OK</note>
+        <target xml:lang="fr" state="translated">OK</target>
+      </trans-unit>
+      <trans-unit id="HelpAboutDlg.WindowTitle">
+        <source xml:lang="en">About Quotelighter</source>
+        <note>ID: HelpAboutDlg.WindowTitle</note>
+        <target xml:lang="fr" state="translated">À propos de Quotelighter</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.Menu.File">
+        <source xml:lang="en">&amp;File</source>
+        <note>ID: MainWindow.Menu.File</note>
+        <note>To control which character will be the mnemonic key (underlined when the user presses the ALT key), put the ampersand before the desired character.</note>
+        <target xml:lang="fr" state="translated">&amp;Fichier</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.Menu.Help">
+        <source xml:lang="en">&amp;Help</source>
+        <note>ID: MainWindow.Menu.Help</note>
+        <note>To control which character will be the mnemonic key (underlined when the user presses the ALT key), put the ampersand before the desired character.</note>
+        <target xml:lang="fr" state="translated">&amp;Aide</target>
+      </trans-unit>
+      <trans-unit id="MainWindow.Menu.Help.About">
+        <source xml:lang="en">&amp;About Quotelighter</source>
+        <note>ID: MainWindow.Menu.Help.About</note>
+        <note>To control which character will be the mnemonic key (underlined when the user presses the ALT key), put the ampersand before the desired character.</note>
+        <target xml:lang="fr" state="translated">À propos de Quotelighter</target>
+      </trans-unit>
+      <trans-unit id="QuotelighterInfo.CopyrightFmt">
+        <source xml:lang="en">{0}. Distributable under the terms of the MIT License.</source>
+        <note>ID: QuotelighterInfo.CopyrightFmt</note>
+        <note>Param is copyright information. This is display in the Help/About box and the splash screen</note>
+        <target xml:lang="fr" state="translated">{0}. Distribuable selon les conditions de la licence MIT.</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

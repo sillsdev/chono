@@ -17,7 +17,7 @@ using System.Text.RegularExpressions;
 using Paratext.PluginInterfaces;
 using static System.Char;
 
-namespace SIL.Chono
+namespace SIL.Quotelighter
 {
     internal class AnnotationSource : IPluginAnnotationSource
     {
@@ -31,18 +31,39 @@ namespace SIL.Chono
 
 	    private class ChapterAnnotationInfo
         {
-	        public IReadOnlyList<IPluginAnnotation> Annotations { get; set; }
-	        public int QuoteLevelAtEndOfChapter { get; }
-	        public int QuoteLevelAtStartOfChapter { get; }
+	        public SortedList<int,VerseAnnotationInfo> VerseAnnotations { get; set; }
+	        public int QuoteLevelAtEndOfChapter => VerseAnnotations.Any() ?
+		        VerseAnnotations.Last().Value.QuoteLevelAtEndOfVerse : 0;
+	        public int QuoteLevelAtStartOfChapter => VerseAnnotations.Any() ?
+		        VerseAnnotations.First().Value.QuoteLevelAtStartOfVerse : 0;
 
-	        public ChapterAnnotationInfo(IReadOnlyList<IPluginAnnotation> annotations,
-	            int quoteLevelAtEndOfChapter, int quoteLevelAtStartOfChapter)
-			{
-		        Annotations = annotations;
-		        QuoteLevelAtEndOfChapter = quoteLevelAtEndOfChapter;
-		        QuoteLevelAtStartOfChapter = quoteLevelAtStartOfChapter;
+	        public ChapterAnnotationInfo(SortedList<int,VerseAnnotationInfo> verseAnnotations)
+	        {
+		        VerseAnnotations = verseAnnotations ?? 
+			        throw new ArgumentNullException(nameof(verseAnnotations));
 	        }
         }
+
+	    private class VerseAnnotationInfo
+	    {
+		    public string USFM { get; }
+		    public IReadOnlyList<IPluginAnnotation> Annotations { get; set; }
+		    public bool AtParagraphStart { get; }
+		    public bool EndsWithParagraph { get; }
+		    public int QuoteLevelAtEndOfVerse { get; }
+		    public int QuoteLevelAtStartOfVerse { get; }
+
+		    public VerseAnnotationInfo(string usfm, IReadOnlyList<IPluginAnnotation> annotations,
+				bool atParagraphStart, bool endsWithParagraph, int quoteLevelAtStartOfVerse, int quoteLevelAtEndOfVerse)
+		    {
+			    USFM = usfm;
+			    Annotations = annotations;
+			    AtParagraphStart = atParagraphStart;
+			    EndsWithParagraph = endsWithParagraph;
+			    QuoteLevelAtStartOfVerse = quoteLevelAtStartOfVerse;
+			    QuoteLevelAtEndOfVerse = quoteLevelAtEndOfVerse;
+		    }
+	    }
 
         private readonly IPluginHost m_host;
         private readonly IProject m_project;
@@ -184,8 +205,9 @@ namespace SIL.Chono
 		            ClearAllAnnotations();
                 else
                 {
-                    if (m_currentBookAnnotations.TryGetValue(chapterNum, out var annotationInfo))
-	                    annotationInfo.Annotations = null;
+	                m_currentBookAnnotations.Remove(chapterNum);
+                    //if (m_currentBookAnnotations.TryGetValue(chapterNum, out var annotationInfo))
+	                   // annotationInfo.VerseAnnotations = null;
                     var currentRef = m_host.ActiveWindowState.VerseRef;
                     if (currentRef.BookNum == m_currentBook && currentRef.ChapterNum <= chapterNum)
 						AnnotationsChanged?.Invoke(this, EventArgs.Empty);
@@ -233,161 +255,243 @@ namespace SIL.Chono
 	        }
 
 	        var chapter = verseRef.ChapterNum;
-	        PopulateAnnotations(verseRef.BookNum, chapter);
+			if (!m_currentBookAnnotations.TryGetValue(chapter, out var chapterInfo))
+				chapterInfo = PopulateChapterAnnotationsFromSavedData(m_currentBook, chapter);
 
-	        return m_currentBookAnnotations[chapter].Annotations.Where(a =>
-		        a.ScriptureSelection.VerseRefStart.CompareTo(verseRef) <= 0 &&
-		        a.ScriptureSelection.VerseRefEnd.CompareTo(verseRef) >= 0).ToList();
+			var verse = verseRef.VerseNum;
+			var verseAnnotations = chapterInfo.VerseAnnotations;
+			int quoteLevelAtStartOfVerse;
+			bool atParaStart;
+			if (verseAnnotations.TryGetValue(verse, out var verseInfo))
+			{
+				if (verseInfo.USFM == usfm)
+					return verseInfo.Annotations;
+				quoteLevelAtStartOfVerse = verseInfo.QuoteLevelAtStartOfVerse;
+				atParaStart = verseInfo.AtParagraphStart;
+			}
+			else
+			{
+				var indexOfPrevVerse = verseAnnotations.Keys.Last(k => k < verse);
+				if (indexOfPrevVerse >= 0)
+				{
+					var prevVerseInfo = verseAnnotations.Values[indexOfPrevVerse];
+					quoteLevelAtStartOfVerse = prevVerseInfo.QuoteLevelAtEndOfVerse;
+					atParaStart = prevVerseInfo.EndsWithParagraph;
+				}
+				else
+				{
+					throw new NotImplementedException();
+					//quoteLevelAtStartOfVerse = chapterInfo.QuoteLevelAtStartOfChapter;
+					//atParaStart = verseInfo.AtParagraphStart;
+				}
+			}
+
+			PopulateAnnotations(m_currentBook, chapter, quoteLevelAtStartOfVerse,
+				verseAnnotations, verse, atParaStart,
+				m_project.ConvertToUSFMTokens(usfm, m_currentBook, chapter, verse));
+
+			var requestedVerseInfo = verseAnnotations[verse];
+
+			var indexOfNextVerse = verseAnnotations.IndexOfKey(verse) + 1;
+			while (indexOfNextVerse < verseAnnotations.Count &&
+				verseAnnotations.Values[indexOfNextVerse].QuoteLevelAtStartOfVerse !=
+				verseAnnotations.Values[indexOfNextVerse - 1].QuoteLevelAtEndOfVerse)
+			{
+				var prev = verseAnnotations.Values[indexOfNextVerse - 1];
+				var verseNum = verseAnnotations.Keys[indexOfNextVerse];
+				PopulateAnnotations(m_currentBook, chapter,
+					prev.QuoteLevelAtEndOfVerse,
+					verseAnnotations, verseNum,
+					prev.EndsWithParagraph, m_project.ConvertToUSFMTokens(
+						verseAnnotations.Values[indexOfNextVerse].USFM, m_currentBook, chapter, verseNum));
+			}
+
+			return requestedVerseInfo.Annotations;
         }
 
-        private void PopulateAnnotations(int bookNum, int chapter)
+        private ChapterAnnotationInfo PopulateChapterAnnotationsFromSavedData(int bookNum, int chapter)
         {
-            // First see if any "holes" in a preceding chapter require us to
-            // rescan.
-            int startingQuoteLevel = 0;
-            for (int c = 1; c <= chapter; c++)
+	        ChapterAnnotationInfo annotationInfo = null;
+
+	        // First see if any "holes" in a preceding chapter require us to
+	        // rescan.
+	        int startingQuoteLevel = 0;
+	        for (int c = 1; c <= chapter; c++)
+	        {
+		        if (!m_currentBookAnnotations.TryGetValue(c, out annotationInfo))
+		        {
+			        // For efficiency, set capacity to the known number of verses, allowing also
+			        // for verse 0.
+			        var verseAnnotationInfo = new SortedList<int, VerseAnnotationInfo>(
+				        m_project.Versification.GetLastVerse(bookNum, chapter) + 1);
+			        PopulateAnnotations(bookNum, c, startingQuoteLevel,
+				        verseAnnotationInfo);
+			        annotationInfo = new ChapterAnnotationInfo(verseAnnotationInfo);
+			        m_currentBookAnnotations[c] = annotationInfo;
+		        }
+			    startingQuoteLevel = annotationInfo.QuoteLevelAtEndOfChapter;
+	        }
+
+	        return annotationInfo;
+        }
+
+        private void PopulateAnnotations(int bookNum, int chapter, int startingQuoteLevel,
+	        SortedList<int, VerseAnnotationInfo> verseAnnotationInfo,
+	        int currVerseNum = 0, bool atParaStart = false, IEnumerable<IUSFMToken> tokens  = null)
+        {
+	        var currentQuoteLevel = new Dictionary<bool, int>
             {
-                if (m_currentBookAnnotations.TryGetValue(c, out var annotationInfo))
+                [true] = startingQuoteLevel,
+                [false] = 0
+            };
+            var annotations = new List<IPluginAnnotation>();
+            var currVerseStartingQuoteLevel = 0;
+            var currVerseTokens = new List<IUSFMToken>();
+            var currVerseStartsPara = atParaStart;
+
+            void AddVerseAnnotations()
+            {
+	            verseAnnotationInfo[currVerseNum] = new VerseAnnotationInfo(
+		            m_project.ConvertToUSFMString(currVerseTokens), annotations,
+		            currVerseStartsPara, atParaStart, currVerseStartingQuoteLevel,
+		            currentQuoteLevel[true]);
+				annotations = new List<IPluginAnnotation>();
+				currVerseStartingQuoteLevel = currentQuoteLevel[true];
+				currVerseStartsPara = atParaStart;
+				currVerseTokens.Clear();
+            }
+
+            foreach (var tok in tokens ?? m_project.GetUSFMTokens(bookNum, chapter))
+            {
+	            // Quotes in non-Scripture never carry over to subsequent non-Scripture text.
+                if (tok.IsScripture)
+	                currentQuoteLevel[false] = 0;
+
+                if (tok is IUSFMMarkerToken markerTok)
                 {
-	                if (annotationInfo.Annotations != null)
+	                if (markerTok.Marker == "v")
 	                {
-		                startingQuoteLevel = annotationInfo.QuoteLevelAtEndOfChapter;
-		                continue;
+		                AddVerseAnnotations();
+		                currVerseNum = int.Parse(markerTok.Data);
+		                // See https://github.com/ubsicap/paratext_demo_plugins/issues/18
+		                //if (currentQuoteLevel[tok.IsScripture] > 0)
+		                //{
+		                //	annotations.Add(new Annotation(new Selection($"\\v {markerTok.Data} ",
+		                //			"", "", tok.VerseRef, 1),
+		                //		currentQuoteLevel[true]));
+		                //}
+	                }
+	                else if (markerTok.Type == MarkerType.Paragraph)
+	                {
+		                atParaStart = true;
 	                }
                 }
-
-                var currentQuoteLevel = new Dictionary<bool, int>
+                else if (tok is IUSFMTextToken textTok)
                 {
-	                [true] = startingQuoteLevel,
-	                [false] = 0
-                };
-                var annotations = new List<IPluginAnnotation>();
-                bool atParaStart = false;
-                foreach (var tok in m_project.GetUSFMTokens(bookNum, c))
-                {
-					// Quotes in non-Scripture never carry over to subsequent non-Scripture text.
-	                if (tok.IsScripture)
-		                currentQuoteLevel[false] = 0;
+	                var text = textTok.Text;
+	                int start = 0;
+	                var continuerLevel = 0;
 
-	                if (tok is IUSFMMarkerToken markerTok)
+	                void AddAnnotation(Capture capture, bool openingNestedQuote = false)
 	                {
-		                if (markerTok.Marker == "v")
+		                continuerLevel = 0;
+		                var cCaptureCharsIncludedInSel =
+			                (openingNestedQuote ? 0 : capture.Length);
+		                var selLength = capture.Index + cCaptureCharsIncludedInSel - start;
+		                if (selLength == 0)
+			                return;
+		                var selectedText = text.Substring(start, selLength);
+		                var level = currentQuoteLevel[tok.IsScripture];
+		                if (!(annotations.LastOrDefault() is Annotation prevAnnotation) ||
+		                    !prevAnnotation.TryExtend(tok.VerseRef, selectedText, level,
+			                    tok.IsScripture, m_allQuoteChars))
 		                {
-							// See https://github.com/ubsicap/paratext_demo_plugins/issues/18
-							//if (currentQuoteLevel[tok.IsScripture] > 0)
-							//{
-							//	annotations.Add(new Annotation(new Selection($"\\v {markerTok.Data} ",
-							//			"", "", tok.VerseRef, 1),
-							//		currentQuoteLevel[true]));
-							//}
-						}
-		                else if (markerTok.Type == MarkerType.Paragraph)
-						{
-							atParaStart = true;
-						}
-	                }
-					else if (tok is IUSFMTextToken textTok)
-	                {
-		                var text = textTok.Text;
-		                int start = 0;
-		                var continuerLevel = 0;
-
-		                void AddAnnotation(Capture capture, bool openingNestedQuote = false)
-		                {
-			                continuerLevel = 0;
-			                var cCaptureCharsIncludedInSel = 
-				                (openingNestedQuote ? 0 : capture.Length);
-			                var selLength = capture.Index + cCaptureCharsIncludedInSel - start;
-			                if (selLength == 0)
-				                return;
-			                var selectedText = text.Substring(start, selLength);
-			                var level = currentQuoteLevel[tok.IsScripture];
-			                if (!(annotations.LastOrDefault() is Annotation prevAnnotation) ||
-			                    !prevAnnotation.TryExtend(tok.VerseRef, selectedText, level, 
-				                    tok.IsScripture, m_allQuoteChars))
-			                {
-				                annotations.Add(new Annotation(
-					                new Selection(
-						                selectedText,
-						                text.Substring(0, start),
-						                text.Substring(capture.Index + cCaptureCharsIncludedInSel),
-						                textTok.VerseRef,
-						                textTok.VerseOffset + start),
-					                level, tok.IsScripture));
-			                }
+			                annotations.Add(new Annotation(
+				                new Selection(
+					                selectedText,
+					                text.Substring(0, start),
+					                text.Substring(capture.Index + cCaptureCharsIncludedInSel),
+					                textTok.VerseRef,
+					                textTok.VerseOffset + start),
+				                level, tok.IsScripture));
 		                }
+	                }
 
-		                foreach (Match match in m_findMarksRegex.Matches(text))
+	                foreach (Match match in m_findMarksRegex.Matches(text))
+	                {
+		                // We skip the first one, which is always "0".
+		                foreach (var matchGroup in match.SuccessfulMatchGroups().Skip(1))
 		                {
-							// We skip the first one, which is always "0".
-			                foreach (var matchGroup in match.SuccessfulMatchGroups().Skip(1))
+			                var currLevel = currentQuoteLevel[tok.IsScripture];
+			                if (atParaStart)
 			                {
-				                var currLevel = currentQuoteLevel[tok.IsScripture];
-								if (atParaStart)
-								{
-									if (continuerLevel < currLevel && IsCorrectContinuer(continuerLevel, match))
-									{
-										atParaStart = ++continuerLevel < currLevel;
-										continue;
-									}
-									atParaStart = false;
-								}
-
-				                if (matchGroup.Name.StartsWith(kRgxOpenLevelGroupPrefix))
+				                if (continuerLevel < currLevel &&
+				                    IsCorrectContinuer(continuerLevel, match))
 				                {
-					                var validMatchLevels = matchGroup.Name.Substring(3);
-					                var index = validMatchLevels.IndexOf(currLevel.ToString(),
-						                StringComparison.Ordinal);
-					                if (index >= 0)
-					                {
-						                if (currLevel > 0)
-							                AddAnnotation(match, true);
-
-						                start = match.Index;
-						                currentQuoteLevel[tok.IsScripture]++;
-					                }
-					                break;
+					                atParaStart = ++continuerLevel < currLevel;
+					                continue;
 				                }
 
-				                if (matchGroup.Name.StartsWith(kRgxCloserGroupPrefix))
+				                atParaStart = false;
+			                }
+
+			                if (matchGroup.Name.StartsWith(kRgxOpenLevelGroupPrefix))
+			                {
+				                var validMatchLevels = matchGroup.Name.Substring(3);
+				                var index = validMatchLevels.IndexOf(currLevel.ToString(),
+					                StringComparison.Ordinal);
+				                if (index >= 0)
 				                {
 					                if (currLevel > 0)
-					                {
-										continuerLevel = 0;
-										var validMatchLevels = matchGroup.Name.Substring(3);
-										if (validMatchLevels.Contains(currentQuoteLevel[tok.IsScripture].ToString()))
-										{
-											AddAnnotation(match);
-											if (--currentQuoteLevel[tok.IsScripture] > 0)
-												start = match.Index + match.Length;
-										}
-									} 
-										
-									break;
+						                AddAnnotation(match, true);
+
+					                start = match.Index;
+					                currentQuoteLevel[tok.IsScripture]++;
 				                }
 
-				                if (matchGroup.Name == kRgxFinalGroup && currentQuoteLevel[tok.IsScripture] > 0)
+				                break;
+			                }
+
+			                if (matchGroup.Name.StartsWith(kRgxCloserGroupPrefix))
+			                {
+				                if (currLevel > 0)
 				                {
-					                AddAnnotation(match);
 					                continuerLevel = 0;
-					                break;
+					                var validMatchLevels = matchGroup.Name.Substring(3);
+					                if (validMatchLevels.Contains(
+						                    currentQuoteLevel[tok.IsScripture].ToString()))
+					                {
+						                AddAnnotation(match);
+						                if (--currentQuoteLevel[tok.IsScripture] > 0)
+							                start = match.Index + match.Length;
+					                }
 				                }
-			                
-							}
 
-			                atParaStart = continuerLevel > 0;
+				                break;
+			                }
+
+			                if (matchGroup.Name == kRgxFinalGroup &&
+			                    currentQuoteLevel[tok.IsScripture] > 0)
+			                {
+				                AddAnnotation(match);
+				                continuerLevel = 0;
+				                break;
+			                }
+
 		                }
-		                
-		                atParaStart = false;
+
+		                atParaStart = continuerLevel > 0;
 	                }
+
+	                atParaStart = false;
                 }
 
-                m_currentBookAnnotations[c] = new ChapterAnnotationInfo(annotations,
-	                currentQuoteLevel[true], startingQuoteLevel);
-
-                startingQuoteLevel = currentQuoteLevel[true];
+                currVerseTokens.Add(tok);
             }
+
+			AddVerseAnnotations();
         }
+		
 
         private bool IsCorrectContinuer(int continuerLevel, Match match)
         {

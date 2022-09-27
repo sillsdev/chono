@@ -14,14 +14,14 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
 
-    <Product Id="$(var.Property_ProductCode)" Name="Chono $(var.Property_ProductVersion)" Language="1033"
+    <Product Id="$(var.Property_ProductCode)" Name="Quotelighter $(var.Property_ProductVersion)" Language="1033"
              Version="$(var.Property_ProductVersion)" Manufacturer="SIL International"
              UpgradeCode="$(var.Property_UpgradeCode)">
 
         <Package Platform="x64" Compressed="yes" InstallerVersion="200" Manufacturer="SIL International" InstallScope="perMachine" />
 
         <MajorUpgrade Schedule="afterInstallInitialize"
-                      DowngradeErrorMessage="A later version of Chono is already installed. If you really want to downgrade, first uninstall Chono, then do this install again." />
+                      DowngradeErrorMessage="A later version of Quotelighter is already installed. If you really want to downgrade, first uninstall Quotelighter, then do this install again." />
 
         <!-- show the license page -->
         <UIRef Id="WixUI_FeatureTree" />
@@ -53,45 +53,16 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
                             Name="Program_Files_Directory_Ptw91"
                             Type="directory" />
         </Property>
-		<!-- TODO: When Paratext 9.2 is released with the actual plugin stuff Chono needs, check to ensure correct version is installed. -->
-        <Condition Message="To install Chono, you need to install Paratext 9.2 or later.">
+		<!-- TODO: When Paratext 9.3 is released with the actual plugin stuff Quotelighter needs, check to ensure correct version is installed. -->
+        <Condition Message="To install Quotelighter, you need to install Paratext 9.3 or later.">
             <![CDATA[Installed OR PARATEXT9BETA OR PARATEXT9]]>
         </Condition>
-				
-		<Property Id="UPDATEP9PLUGINCACHE" Secure="yes">
-            <DirectorySearch Id="Paratext9PluginCacheExeExists" Path="[PARATEXT9]">
-                <FileSearch Name="UpdateParatextPluginCache.exe"/>
-            </DirectorySearch>
-        </Property>
-
-		<Property Id="UPDATEP9BETAPLUGINCACHE" Secure="yes">
-            <DirectorySearch Id="Paratext9BetaPluginCacheExeExists" Path="[PARATEXT9BETA]">
-                <FileSearch Name="UpdateParatextPluginCache.exe"/>
-            </DirectorySearch>
-        </Property>
-		
-		<!-- This is extremely unlikely... -->
-        <Condition Message="Paratext is not installed properly. Missing required file: UpdateParatextPluginCache.exe. Re-run the Paratext Installer to repair the installation. Then re-run the Chono Installer.">
-            <![CDATA[Installed OR
-			(PARATEXT9 AND UPDATEP9PLUGINCACHE) OR
-			(PARATEXT9BETA AND UPDATEP9BETAPLUGINCACHE)]]>
-        </Condition>
-		
-        <Binary Id="CustomInstallerActions.CA.dll"
-                SourceFile="CustomInstallerActions/bin/x64/Release/CustomInstallerActions.CA.dll" />
-
-        <CustomAction Id="RemoveAllChonoUserCacheFiles"
-                      Return="asyncWait"
-                      Execute="deferred"
-                      Impersonate="no"
-                      BinaryKey="CustomInstallerActions.CA.dll"
-                      DllEntry="RemoveAllChonoUserCacheFiles" />
 
         <Directory Id="TARGETDIR" Name="SourceDir">
 			<Directory Id="ProgramFiles64Folder" Name="PFiles">
 				<Directory Id="PARATEXT9" Name="ParatextDir9">
 					<Directory Id="PLUGINDIR9" Name="plugins">
-						<Directory Id="INSTALLDIR9" Name="Chono">
+						<Directory Id="INSTALLDIR9" Name="Quotelighter">
 							<Directory Id="INSTALLDIR9_LOCALIZATION" Name="localization"/>
 							<Directory Id="DocsDirP9" Name="docs"/>
 						</Directory>
@@ -99,7 +70,7 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
 				</Directory>
 				<Directory Id="PARATEXT9BETA" Name="ParatextDir9Beta">
 					<Directory Id="PLUGINDIR9BETA" Name="plugins">
-						<Directory Id="INSTALLDIR9BETA" Name="Chono">
+						<Directory Id="INSTALLDIR9BETA" Name="Quotelighter">
 							<Directory Id="INSTALLDIR9BETA_LOCALIZATION" Name="localization"/>
 							<Directory Id="DocsDirP9Beta" Name="docs"/>
 						</Directory>
@@ -108,9 +79,9 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
 			</Directory>
         </Directory>
 
-        <ComponentGroup Id="COMPONENTSFORP9PLUGIN" Directory="INSTALLDIR9" Source="..\Chono\bin\x64\Release">
+        <ComponentGroup Id="COMPONENTSFORP9PLUGIN" Directory="INSTALLDIR9" Source="..\Quotelighter\bin\x64\Release">
             <Component Guid="*">
-                <File Id="Chono.dll_P9" ShortName="x6bjjpu5.dll" KeyPath="yes" Name="Chono.dll" />
+                <File Id="Quotelighter.dll_P9" ShortName="x6bjjpu5.dll" KeyPath="yes" Name="Quotelighter.dll" />
             </Component>
             <Component Guid="*">
                 <File Id="Analytics.NET.dll_P9" ShortName="t9a1cxl9.dll" KeyPath="yes" Name="Analytics.NET.dll" />
@@ -139,13 +110,13 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
 				<File Id="Microsoft.Extensions.DependencyModel.dll_P9" ShortName="msedmp9.dll" KeyPath="yes" Name="Microsoft.Extensions.DependencyModel.dll"/>
 			</Component>
 			<Component Guid="*">
-				<File Id="icudt62.dll_86_P9" ShortName="dt62p9.dll" KeyPath="yes" Source="..\Chono\bin\x64\Release\lib\win-x64\icudt62.dll" />
+				<File Id="icudt62.dll_86_P9" ShortName="dt62p9.dll" KeyPath="yes" Source="..\Quotelighter\bin\x64\Release\lib\win-x64\icudt62.dll" />
 			</Component>
 			<Component Guid="*">
-				<File Id="icuin62.dll_86_P9" ShortName="in62p9.dll" KeyPath="yes" Source="..\Chono\bin\x64\Release\lib\win-x64\icuin62.dll" />
+				<File Id="icuin62.dll_86_P9" ShortName="in62p9.dll" KeyPath="yes" Source="..\Quotelighter\bin\x64\Release\lib\win-x64\icuin62.dll" />
 			</Component>
 			<Component Guid="*">
-				<File Id="icuuc62.dll_86_P9" ShortName="uc62p9.dll" KeyPath="yes" Source="..\Chono\bin\x64\Release\lib\win-x64\icuuc62.dll" />
+				<File Id="icuuc62.dll_86_P9" ShortName="uc62p9.dll" KeyPath="yes" Source="..\Quotelighter\bin\x64\Release\lib\win-x64\icuuc62.dll" />
 			</Component>
 			<!-- End ICU -->
             <Component Guid="*">
@@ -169,7 +140,7 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
                 <File Id="SIL.Core.Desktop.dll_P9" ShortName="3ibsrrdb.dll" KeyPath="yes" Name="SIL.Core.Desktop.dll" />
             </Component>
             <Component Guid="*">
-                <File Id="Chono.pdb_P9" ShortName="8o1biihw.pdb" KeyPath="yes" Name="Chono.pdb" />
+                <File Id="Quotelighter.pdb_P9" ShortName="8o1biihw.pdb" KeyPath="yes" Name="Quotelighter.pdb" />
             </Component>
             <Component Guid="*">
                 <File Id="Icon_P9" ShortName="44tpy8ze.ico" KeyPath="yes" Name="Chono.ico" />
@@ -177,9 +148,9 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
             <Component Guid="*">
                 <File Id="CreditsAndLicense.htm_P9" ShortName="qgigfgzl.htm" KeyPath="yes" Name="CreditsAndLicense.htm" />
             </Component>
-            <Component Id="Chono.dll.config_P9" Guid="*">
-                <File Id="Chono.dll.config_P9" ShortName="abh9z0kp.cfg" KeyPath="yes"
-                      Name="Chono.dll.config" />
+            <Component Id="Quotelighter.dll.config_P9" Guid="*">
+                <File Id="Quotelighter.dll.config_P9" ShortName="abh9z0kp.cfg" KeyPath="yes"
+                      Name="Quotelighter.dll.config" />
             </Component>
             <Component Id="ReleaseNotes.md_P9" Guid="*">
                 <File Id="ReleaseNotes.md_P9" ShortName="p0rdflid.md" Source="..\DistFiles\ReleaseNotes.md" />
@@ -188,22 +159,22 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
 
         <ComponentGroup Id="COMPONENTSFORP9PLUGINLOCALIZATION_es" Directory="INSTALLDIR9_LOCALIZATION"
                         Source="..\DistFiles\localization">
-            <Component Id="Chono.es.xlf_P9" Guid="*">
-                <File Id="Chono.es.xlf_P9" ShortName="esp9.xlf" KeyPath="yes" Name="Chono.es.xlf" />
+            <Component Id="Quotelighter.es.xlf_P9" Guid="*">
+                <File Id="Quotelighter.es.xlf_P9" ShortName="esp9.xlf" KeyPath="yes" Name="Quotelighter.es.xlf" />
             </Component>
         </ComponentGroup>
 
         <ComponentGroup Id="COMPONENTSFORP9PLUGINLOCALIZATION_fr" Directory="INSTALLDIR9_LOCALIZATION"
                         Source="..\DistFiles\localization">
-            <Component Id="Chono.fr.xlf_P9" Guid="*">
-                <File Id="Chono.fr.xlf_P9" ShortName="frp9.xlf" KeyPath="yes" Name="Chono.fr.xlf" />
+            <Component Id="Quotelighter.fr.xlf_P9" Guid="*">
+                <File Id="Quotelighter.fr.xlf_P9" ShortName="frp9.xlf" KeyPath="yes" Name="Quotelighter.fr.xlf" />
             </Component>
         </ComponentGroup>
 
         <ComponentGroup Id="COMPONENTSFORP9BetaPLUGIN" Directory="INSTALLDIR9BETA"
-                        Source="..\Chono\bin\x64\Release">
+                        Source="..\Quotelighter\bin\x64\Release">
             <Component Guid="*">
-                <File Id="Chono.dll_P9Beta" ShortName="9fsib2cv.dll" KeyPath="yes" Name="Chono.dll" />
+                <File Id="Quotelighter.dll_P9Beta" ShortName="9fsib2cv.dll" KeyPath="yes" Name="Quotelighter.dll" />
             </Component>
 
             <Component Guid="*">
@@ -234,13 +205,13 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
 				<File Id="Microsoft.Extensions.DependencyModel.dll_P9Beta" ShortName="msedmp7t.dll" KeyPath="yes" Name="Microsoft.Extensions.DependencyModel.dll"/>
 			</Component>
 			<Component Guid="*">
-				<File Id="icudt62.dll_86_P9Beta" ShortName="dt62p7t.dll" KeyPath="yes" Source="..\Chono\bin\x64\Release\lib\win-x64\icudt62.dll" />
+				<File Id="icudt62.dll_86_P9Beta" ShortName="dt62p7t.dll" KeyPath="yes" Source="..\Quotelighter\bin\x64\Release\lib\win-x64\icudt62.dll" />
 			</Component>
 			<Component Guid="*">
-				<File Id="icuin62.dll_86_P9Beta" ShortName="in62p7t.dll" KeyPath="yes" Source="..\Chono\bin\x64\Release\lib\win-x64\icuin62.dll" />
+				<File Id="icuin62.dll_86_P9Beta" ShortName="in62p7t.dll" KeyPath="yes" Source="..\Quotelighter\bin\x64\Release\lib\win-x64\icuin62.dll" />
 			</Component>
 			<Component Guid="*">
-				<File Id="icuuc62.dll_86_P9Beta" ShortName="uc62p7t.dll" KeyPath="yes" Source="..\Chono\bin\x64\Release\lib\win-x64\icuuc62.dll" />
+				<File Id="icuuc62.dll_86_P9Beta" ShortName="uc62p7t.dll" KeyPath="yes" Source="..\Quotelighter\bin\x64\Release\lib\win-x64\icuuc62.dll" />
 			</Component>
 			<!-- End ICU -->
             <Component Guid="*">
@@ -266,7 +237,7 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
                       Name="SIL.Core.Desktop.dll" />
             </Component>
             <Component Guid="*">
-                <File Id="Chono.pdb_P9Beta" ShortName="4ut3f5jb.pdb" KeyPath="yes" Name="Chono.pdb" />
+                <File Id="Quotelighter.pdb_P9Beta" ShortName="4ut3f5jb.pdb" KeyPath="yes" Name="Quotelighter.pdb" />
             </Component>
             <Component Guid="{bb48a596-a43f-47f0-b6c9-fd125d18096f}">
                 <File Id="Icon_P9Beta" ShortName="fihp0pz8.ico" KeyPath="yes" Name="Chono.ico" />
@@ -275,9 +246,9 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
                 <File Id="CreditsAndLicense.htm_P9Beta" ShortName="2gd8uwk5.htm" KeyPath="yes"
                       Name="CreditsAndLicense.htm" />
             </Component>
-            <Component Id="Chono.dll.config_P9Beta" Guid="*">
-                <File Id="Chono.dll.config_P9Beta" ShortName="eemr572z.cfg" KeyPath="yes"
-                      Name="Chono.dll.config" />
+            <Component Id="Quotelighter.dll.config_P9Beta" Guid="*">
+                <File Id="Quotelighter.dll.config_P9Beta" ShortName="eemr572z.cfg" KeyPath="yes"
+                      Name="Quotelighter.dll.config" />
             </Component>
             <Component Id="ReleaseNotes.md_P9Beta" Guid="*">
                 <File Id="ReleaseNotes.md_P9Beta" ShortName="eqghs9lt.md" Source="..\DistFiles\ReleaseNotes.md" />
@@ -286,15 +257,15 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
 
         <ComponentGroup Id="COMPONENTSFORP9BetaPLUGINLOCALIZATION_es" Directory="INSTALLDIR9BETA_LOCALIZATION"
                         Source="..\DistFiles\localization">
-            <Component Id="Chono.es.xlf_P9Beta" Guid="*">
-                <File Id="Chono.es.xlf_P9Beta" ShortName="esp9beta.xlf" KeyPath="yes" Name="Chono.es.xlf" />
+            <Component Id="Quotelighter.es.xlf_P9Beta" Guid="*">
+                <File Id="Quotelighter.es.xlf_P9Beta" ShortName="esp9beta.xlf" KeyPath="yes" Name="Quotelighter.es.xlf" />
             </Component>
         </ComponentGroup>
 
         <ComponentGroup Id="COMPONENTSFORP9BetaPLUGINLOCALIZATION_fr" Directory="INSTALLDIR9BETA_LOCALIZATION"
                         Source="..\DistFiles\localization">
-            <Component Id="Chono.fr.xlf_P9Beta" Guid="*">
-                <File Id="Chono.fr.xlf_P9Beta" ShortName="frp8.xlf" KeyPath="yes" Name="Chono.fr.xlf" />
+            <Component Id="Quotelighter.fr.xlf_P9Beta" Guid="*">
+                <File Id="Quotelighter.fr.xlf_P9Beta" ShortName="frp8.xlf" KeyPath="yes" Name="Quotelighter.fr.xlf" />
             </Component>
         </ComponentGroup>
 
@@ -343,68 +314,14 @@ http://blogs.msdn.com/robmen/archive/2003/10/04/56479.aspx -->
                 <ComponentGroupRef Id="COMPONENTSFORP9BetaDocumentation_en" />
             </Feature>
         </Feature>
-
-        <CustomAction Id="SetUpdatePluginStore_P9" Property="UpdatePluginStore_P9"
-                      Value="&quot;[PARATEXT9]UpdateParatextPluginCache.exe&quot;" Execute="immediate" Return="check" />
-        <CustomAction Id="SetUpdatePluginStore_P9Beta" Property="UpdatePluginStore_P9Beta"
-                      Value="&quot;[PARATEXT9BETA]UpdateParatextPluginCache.exe&quot;" Execute="immediate"
-                      Return="check" />
-
-        <CustomAction Id="SetUpdatePluginStore_P9_Failsafe" Property="UpdatePluginStore_P9_Failsafe"
-                      Value="&quot;[PARATEXT9]UpdateParatextPluginCache.exe&quot;" Execute="immediate" Return="check" />
-        <CustomAction Id="SetUpdatePluginStore_P9Beta_Failsafe" Property="UpdatePluginStore_P9Beta_Failsafe"
-                      Value="&quot;[PARATEXT9BETA]UpdateParatextPluginCache.exe&quot;" Execute="immediate"
-                      Return="check" />
 					  
-        <CustomAction Id="UpdatePluginStore_P9" BinaryKey="WixCA" DllEntry="CAQuietExec" Impersonate="no"
-                      Execute="deferred" Return="check" />
-        <CustomAction Id="UpdatePluginStore_P9Beta" BinaryKey="WixCA" DllEntry="CAQuietExec" Impersonate="no"
-                      Execute="deferred" Return="check" />
-
-        <CustomAction Id="UpdatePluginStore_P9_Failsafe" BinaryKey="WixCA" DllEntry="CAQuietExec" Impersonate="no"
-                      Execute="deferred" Return="asyncWait" />
-        <CustomAction Id="UpdatePluginStore_P9Beta_Failsafe" BinaryKey="WixCA" DllEntry="CAQuietExec" Impersonate="no"
-                      Execute="deferred" Return="asyncWait" />
-					  
-		<!-- INSTALLSTATE_LOCAL = 3 -->
+        <!-- INSTALLSTATE_LOCAL = 3 -->
 		<!-- INSTALLSTATE_ABSENT = 2 -->
-        <InstallExecuteSequence>
-            <Custom Action="RemoveAllChonoUserCacheFiles" After="RemoveRegistryValues"></Custom>
-
-			<!-- Sequencing of the failsafe and non-failsafe versions of the actions is arbitrary since their
-			conditions are mutually exclusive. -->
-			
-            <Custom Action="UpdatePluginStore_P9" Before="InstallFinalize">
-                <![CDATA[&PluginFeature_P9=3]]>
-            </Custom>
-            <Custom Action="UpdatePluginStore_P9_Failsafe" Before="InstallFinalize">
-                <![CDATA[(NOT UPGRADINGPRODUCTCODE) AND (&PluginFeature_P9=2) AND UPDATEP9PLUGINCACHE AND (!PluginFeature_P9=3)]]>
-            </Custom>
-            <Custom Action="SetUpdatePluginStore_P9" Before="UpdatePluginStore_P9">
-                <![CDATA[&PluginFeature_P9=3]]>
-            </Custom>
-            <Custom Action="SetUpdatePluginStore_P9_Failsafe" Before="UpdatePluginStore_P9_Failsafe">
-                <![CDATA[(NOT UPGRADINGPRODUCTCODE) AND (&PluginFeature_P9=2) AND UPDATEP9PLUGINCACHE AND (!PluginFeature_P9=3)]]>
-            </Custom>
-			
-			<Custom Action="UpdatePluginStore_P9Beta" Before="InstallFinalize">
-                <![CDATA[&PluginFeature_P9Beta=3]]>
-            </Custom>
-            <Custom Action="UpdatePluginStore_P9Beta_Failsafe" Before="InstallFinalize">
-                <![CDATA[(NOT UPGRADINGPRODUCTCODE) AND (&PluginFeature_P9Beta=2) AND UPDATEP9BETAPLUGINCACHE AND (!PluginFeature_P9Beta=3)]]>
-            </Custom>
-            <Custom Action="SetUpdatePluginStore_P9Beta" Before="UpdatePluginStore_P9Beta">
-                <![CDATA[&PluginFeature_P9Beta=3]]>
-            </Custom>
-            <Custom Action="SetUpdatePluginStore_P9Beta_Failsafe" Before="UpdatePluginStore_P9Beta_Failsafe">
-                <![CDATA[(NOT UPGRADINGPRODUCTCODE) AND (&PluginFeature_P9Beta=2) AND UPDATEP9BETAPLUGINCACHE AND (!PluginFeature_P9Beta=3)]]>
-            </Custom>
-        </InstallExecuteSequence>
 
         <Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
 
         <!-- Icon you see in add/remove programs control panel -->
-        <Icon Id="Chono.ico" SourceFile="..\Chono\bin\x64\Release\Chono.dll" />
+        <Icon Id="Chono.ico" SourceFile="..\Quotelighter\bin\x64\Release\Quotelighter.dll" />
         <Property Id="ARPPRODUCTICON" Value="Chono.ico" />
     </Product>
 </Wix>

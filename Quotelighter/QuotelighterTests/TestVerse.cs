@@ -4,7 +4,7 @@ using NUnit.Framework;
 using Paratext.PluginInterfaces;
 using SIL.Scripture;
 
-namespace SIL.Chono
+namespace SIL.Quotelighter
 {
 	internal class TestVerse : IVerseRef
 	{

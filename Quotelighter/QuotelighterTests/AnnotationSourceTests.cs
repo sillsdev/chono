@@ -10,10 +10,11 @@ using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Paratext.PluginInterfaces;
 using SIL.Extensions;
+using SIL.Scripture;
 using static System.Char;
 using static System.Environment;
 
-namespace SIL.Chono
+namespace SIL.Quotelighter
 {
 	internal interface ITestToken
 	{
@@ -49,18 +50,28 @@ namespace SIL.Chono
 			internal const string kJer1V7Lev1QuotePart2 = " You must go to everyone I send you to and say whatever I command you. ";
 
 			internal const string kJer1V8Lev1Quote = "Do not be afraid of them, for I am with you and will rescue you,”";
-			internal const string kJer1V8AfterQuote = " declares the Lord.";
+			internal const string kJer1V8AfterQuote = " declares the Lord. ";
 
 			internal const string kMat5V4Text = "Blessed are those who mourn, for they shall be comforted.";
+
+			internal const string kMat5V33P1Level1Quote = "Nde, nit nonmborak yak ondosolar-e: ";
+			internal const string kMat5V33P1Level2Quote = "‘Irit timin-o luk owak mbarid-nak na-ge kwarigit lak yurak pug-o. Are, Nagawan Indo imbiri bem ";
+			internal const string kMat5V33P1Level3Quote = "“Irit kwarimin-o”";
+			internal const string kMat5V33P1 = kMat5V33P1Level1Quote + kMat5V33P1Level2Quote + kMat5V33P1Level3Quote + " ";
+			internal const string kMat5V33P2Level2QuoteSansCont = "luk owak mbaridnak iri na ndak ndag-et kwarurag-o’";
+			internal const string kMat5V33P2Level1Quote = "luk yidnak wene iri-ge kit-nen kulugwi nar-o. ";
 
 			internal const string kMat6SectHead1To4BeforeQuote = "Beware of ";
 			internal const string kMat6SectHead1To4QuoteNotClosed = "“showing off";
 			internal const string kMat6SectHead1To4 = kMat6SectHead1To4BeforeQuote + kMat6SectHead1To4QuoteNotClosed;
 			internal const string kMat7V20 = "So you will know who they are by what comes out. ";
 			internal const string kMat7SectHead21To23 = "What it means to have Jesus as Lord";
-			internal const string kMat7SectHead24To27 = "Jesus says: “Build Your House on the Rock”";
 			internal const string kMat7V23Lev1Quote = "Then I’ll tell them, ";
 			internal const string kMat7V23Lev2Quote = "‘I never knew you. Leave, you creeps!’ ";
+			internal const string kMat7V23 = kMat7V23Lev1Quote + kMat7V23Lev2Quote;
+			internal const string kMat7SectHead24To27Quote = "“Build Your House on the Rock”";
+			internal const string kMat7SectHead24To27AfterQuote = " warns Jesus";
+			internal const string kMat7SectHead24To27 = kMat7SectHead24To27Quote + kMat7SectHead24To27AfterQuote;
 			internal const string kMat7V24SansCont = "Everyone who heeds my words will be like a wise man who built on the rock. ";
 
 			internal const string kMat22V44Line1SansLev1Cont = "‘The Lord said to my Lord, ";
@@ -238,7 +249,7 @@ namespace SIL.Chono
 				bool wholeWord = false, bool treatAsRegex = false)
 			{
 				if (selectedText == "")
-					throw new Exception($"ERROR: The plugin {ChonoPlugin.kPluginName} created a " +
+					throw new Exception($"ERROR: The plugin {QuotelighterPlugin.kPluginName} created a " +
 						"zero-length annotation without an icon.");
 
 				// REVIEW: If/when https://github.com/ubsicap/paratext_demo_plugins/issues/18 is
@@ -296,6 +307,42 @@ namespace SIL.Chono
 						if (selectedText.EndsWith(kMat5V4Text))
 							sel = new TestScriptureSelection(reference, selectedText, v, "");
 						break;
+					case 40005033:
+						if (selectedText == kMat5V33P1Level1Quote)
+						{
+							sel = new TestScriptureSelection(reference, selectedText, v,
+								kMat5V33P1Level2Quote + kMat5V33P1Level3Quote + " ");
+						}
+						else if (selectedText == kMat5V33P1Level2Quote)
+						{
+							sel = new TestScriptureSelection(reference, selectedText,
+								v + kMat5V33P1Level1Quote, kMat5V33P1Level3Quote + " ");
+						}
+						else if (selectedText == kMat5V33P1Level3Quote)
+						{
+							sel = new TestScriptureSelection(reference, selectedText, 
+								v + kMat5V33P1Level1Quote + kMat5V33P1Level2Quote, " ");
+						}
+						else if (selectedText == " ")
+						{
+							sel = new TestScriptureSelection(reference, selectedText, 
+								v + kMat5V33P1.TrimEnd(), "");
+						}
+						else
+						{
+							var p2Offset = (v + kMat5V33P1).Length;
+							if (selectedText.EndsWith(kMat5V33P2Level2QuoteSansCont))
+							{
+								sel = new TestScriptureSelection(reference, selectedText, @"\p ",
+									kMat5V33P2Level1Quote, p2Offset);
+							}
+							else if (selectedText == kMat5V33P2Level1Quote)
+							{
+								sel = new TestScriptureSelection(reference, selectedText, @"\p " +
+									GetCont(2) + kMat5V33P2Level2QuoteSansCont, "", p2Offset);
+							}
+						}
+						break;
 					case 40006000:
 						if (selectedText.EndsWith(kMat6SectHead1To4QuoteNotClosed))
 						{
@@ -306,6 +353,28 @@ namespace SIL.Chono
 					case 40007020:
 						if (selectedText.EndsWith(kMat7V20))
 							sel = new TestScriptureSelection(reference, selectedText, v, "");
+						break;
+					case 40007023:
+						if (selectedText == kMat7V23Lev1Quote)
+						{
+							sel = new TestScriptureSelection(reference, selectedText,
+								v, kMat7V23Lev2Quote);
+						}
+						else if (selectedText == kMat7V23Lev2Quote.TrimEnd())
+						{
+							sel = new TestScriptureSelection(reference, selectedText,
+								v + kMat7V23Lev1Quote, " ");
+						}
+						else if (selectedText == " ")
+						{
+							sel = new TestScriptureSelection(reference, selectedText,
+								v + kMat7V23Lev1Quote + kMat7V23Lev2Quote.TrimEnd(), "");
+						}
+						else if (selectedText == kMat7SectHead24To27Quote)
+						{
+							sel = new TestScriptureSelection(reference, selectedText, @"\s ",
+								kMat7SectHead24To27AfterQuote, (v + kMat7V23).Length);
+						}
 						break;
 					case 40022044:
 						if (selectedText.EndsWith(kMat22V44Line1SansLev1Cont))
@@ -393,15 +462,15 @@ namespace SIL.Chono
 							case 0:
 							case 1:
 								verse = new TestVerse(bookNum, 1, 0, versification);
-								lastTok = new TestMarkerToken(verse, "id", "JHN");
+								lastTok = new TestMarkerToken(verse, "id", "JER");
 								yield return lastTok;
 								yield return new TestMarkerToken(verse, "c", "1", lastTok.EndVerseOffset);
 								foreach (var tok in GetVerses(verse,
-									         "Jeremiah was one of the priests in the territory of Benjamin. ",
-									         "Lord spoke to him during the reign of Josiah king of Judah, ",
-									         "until the 5th month of the 11th year of Zedekiah, when Jerusalem was exiled. ",
-									         NewLine,
-									         "The word of the Lord came to me, saying, "))
+											 "Jeremiah was one of the priests in the territory of Benjamin. ",
+											 "Lord spoke to him during the reign of Josiah king of Judah, ",
+											 "until the 5th month of the 11th year of Zedekiah, when Jerusalem was exiled. ",
+											 NewLine,
+											 "The word of the Lord came to me, saying, "))
 								{
 									lastTok = tok;
 									yield return tok;
@@ -409,9 +478,9 @@ namespace SIL.Chono
 
 								verse = new TestVerse(bookNum, 1, 5, versification);
 								foreach (var tok in GetPoetryLinesFor(verse, lastTok.EndVerseOffset,
-									         kJer1V5Line1,
-									         kJer1V5Line2,
-									         kJer1V5Line3 + " "))
+											 kJer1V5Line1,
+											 kJer1V5Line2,
+											 kJer1V5Line3 + " "))
 								{
 									lastTok = tok;
 									yield return tok;
@@ -419,10 +488,10 @@ namespace SIL.Chono
 
 								yield return new TestMarkerToken(lastTok, "p");
 								foreach (var tok in GetVerses(verse,
-									         "“Oh, Sovereign Lord,” I said, “I do not know how to speak; I am young.”",
-									         NewLine,
-									         kJer1V7BeforeQuote + kJer1V7Lev1QuotePart1 + kJer1V7Lev2Quote + kJer1V7Lev1QuotePart2,
-									         kJer1V8Lev1Quote + kJer1V8AfterQuote))
+											 "“Oh, Sovereign Lord,” I said, “I do not know how to speak; I am young.”",
+											 NewLine,
+											 kJer1V7BeforeQuote + kJer1V7Lev1QuotePart1 + kJer1V7Lev2Quote + kJer1V7Lev1QuotePart2,
+											 kJer1V8Lev1Quote + kJer1V8AfterQuote))
 									yield return tok;
 								break;
 							default:
@@ -461,28 +530,43 @@ namespace SIL.Chono
 								lastTok = GetChapterTok(5);
 								yield return lastTok;
 								foreach (var tok in GetVerses(lastTok.VerseRef,
-									         "Seeing the crowds, he sat down and his disciples came to him. ",
-									         NewLine,
-									         "And he opened his mouth and taught them, saying: ",
-									         NewLine,
-									         "“Blessed are the poor in spirit, for theirs is the kingdom of heaven. ",
-									         NewLine,
-									         Language.QuotationMarkInfo.PrimaryLevels[0].Continuer + kMat5V4Text))
+											 "Seeing the crowds, he sat down and his disciples came to him. ",
+											 NewLine,
+											 "And he opened his mouth and taught them, saying: ",
+											 NewLine,
+											 "“Blessed are the poor in spirit, for theirs is the kingdom of heaven. ",
+											 NewLine,
+											 Language.QuotationMarkInfo.PrimaryLevels[0].Continuer + kMat5V4Text,
+											 NewLine))
+								{
 									yield return tok;
+								}
+
+								verse = new TestVerse(bookNum, 5, 33);
+								lastTok = new TestMarkerToken(verse, "v", verse.VerseNum.ToString());
+								yield return lastTok;
+								lastTok = new TestTextToken(verse, kMat5V33P1, lastTok.EndVerseOffset);
+								yield return lastTok;
+								lastTok = new TestMarkerToken(lastTok, "p");
+								yield return lastTok;
+								yield return new TestTextToken(verse,
+									GetCont(2) + kMat5V33P2Level2QuoteSansCont + kMat5V33P2Level1Quote,
+									lastTok.EndVerseOffset);
+
 								if (chapterNum == 0)
 									goto case 6;
 								break;
 							case 6:
 								lastTok = GetChapterTok(6);
 								yield return lastTok;
-								lastTok = new TestMarkerToken(lastTok.VerseRef, "s", offset:lastTok.EndVerseOffset);
+								lastTok = new TestMarkerToken(lastTok.VerseRef, "s", offset: lastTok.EndVerseOffset);
 								yield return lastTok;
 								lastTok = new TestTextToken(lastTok.VerseRef, kMat6SectHead1To4, lastTok.EndVerseOffset, false);
 								yield return lastTok;
 								yield return new TestMarkerToken(lastTok, "p");
 								foreach (var tok in GetVerses(lastTok.VerseRef,
-									         Language.QuotationMarkInfo.PrimaryLevels.FirstOrDefault()?.Continuer +
-									         "Beware of showing off your righteousness, unless you want no reward from God. "))
+											 Language.QuotationMarkInfo.PrimaryLevels.FirstOrDefault()?.Continuer +
+											 "Beware of showing off your righteousness, unless you want no reward from God. "))
 									yield return tok;
 								if (chapterNum == 0)
 									goto case 7;
@@ -492,8 +576,8 @@ namespace SIL.Chono
 								yield return lastTok;
 								yield return new TestMarkerToken(lastTok, "p");
 								foreach (var tok in GetVerses(lastTok.VerseRef,
-									         Language.QuotationMarkInfo.PrimaryLevels.FirstOrDefault()?.Continuer +
-									         "Judge not, that you be not judged. "))
+											 Language.QuotationMarkInfo.PrimaryLevels.FirstOrDefault()?.Continuer +
+											 "Judge not, that you be not judged. "))
 								{
 									lastTok = tok;
 									yield return tok;
@@ -510,9 +594,9 @@ namespace SIL.Chono
 								yield return lastTok;
 								yield return new TestMarkerToken(lastTok.VerseRef, "p");
 								foreach (var tok in GetVerses(lastTok.VerseRef,
-									         "“Not all who say, ‘Lord, Lord,’ will enter heaven, just those who do God’s will. ",
-									         "Many will say, ‘Lord, Lord, did we not do our work in your name?’ ",
-									         kMat7V23Lev1Quote + kMat7V23Lev2Quote))
+											 "“Not all who say, ‘Lord, Lord,’ will enter heaven, just those who do God’s will. ",
+											 "Many will say, ‘Lord, Lord, did we not do our work in your name?’ ",
+											 kMat7V23))
 								{
 									lastTok = tok;
 									yield return tok;
@@ -524,13 +608,13 @@ namespace SIL.Chono
 								yield return lastTok;
 								yield return new TestMarkerToken(lastTok, "p");
 								foreach (var tok in GetVerses(lastTok.VerseRef,
-									         Language.QuotationMarkInfo.PrimaryLevels.FirstOrDefault()?.Continuer +
-									         kMat7V24SansCont,
+											 Language.QuotationMarkInfo.PrimaryLevels.FirstOrDefault()?.Continuer +
+											 kMat7V24SansCont,
 											 "A big storm could not topple it because it was founded on rock. ",
 											 "Disregarding my words makes you like a fool who built on sand. ",
-									         "It got wet and went splat!” ",
+											 "It got wet and went splat!” ",
 											 NewLine,
-									         "When people heard Jesus, they knew he was the real deal."))
+											 "When people heard Jesus, they knew he was the real deal."))
 									yield return tok;
 								if (chapterNum == 0)
 									goto case 8;
@@ -557,11 +641,6 @@ namespace SIL.Chono
 								break;
 							case 12:
 								GetChapterTok(12);
-								if (chapterNum == 0)
-									goto case 13;
-								break;
-							case 13:
-								GetChapterTok(13);
 								if (chapterNum == 0)
 									goto case 14;
 								break;
@@ -610,18 +689,18 @@ namespace SIL.Chono
 								yield return lastTok;
 								yield return new TestMarkerToken(lastTok, "p");
 								foreach (var tok in GetVerses(new TestVerse(bookNum, 22, 40, versification),
-							         "While the Pharisees were together, Jesus questioned them, ",
-							         "saying, “Whose son is the Christ?” They replied, “The son of David.” ",
-							         "He said to them, “Why does David call him Lord, saying, "))
+									 "While the Pharisees were together, Jesus questioned them, ",
+									 "saying, “Whose son is the Christ?” They replied, “The son of David.” ",
+									 "He said to them, “Why does David call him Lord, saying, "))
 								{
 									lastTok = tok;
 									yield return tok;
 								}
 								verse = new TestVerse(bookNum, 22, 44, versification);
 								foreach (var tok in GetPoetryLinesFor(verse, lastTok.EndVerseOffset,
-									         "1:" + GetCont(1, "p", "q1") + kMat22V44Line1SansLev1Cont,
-									         "1:" + GetCont(2, "p", "q1") + kMat22V44Line2SansLev12Cont,
-									         "2:" + GetCont(3, "q1", "q2") + kMat22V44Line3SansConts + kMat22V44Line3AfterQuote))
+											 "1:" + GetCont(1, "p", "q1") + kMat22V44Line1SansLev1Cont,
+											 "1:" + GetCont(2, "p", "q1") + kMat22V44Line2SansLev12Cont,
+											 "2:" + GetCont(3, "q1", "q2") + kMat22V44Line3SansConts + kMat22V44Line3AfterQuote))
 									yield return tok;
 								break;
 						}
@@ -653,18 +732,18 @@ namespace SIL.Chono
 								lastTok = GetChapterTok(4);
 								yield return lastTok;
 								foreach (var tok in GetVerses(lastTok.VerseRef,
-									         "Now Jesus learned that the Pharisees knew he was baptizing more disciples than John— ",
-									         "although in fact it was not Jesus who baptized, but his disciples. ",
-									         "So he left Judea and went back once more to Galilee. ",
-									         NewLine,
-									         "Now he had to go through Samaria. ",
-									         "They came to a town near the ground Jacob had given to Joseph. ",
-									         "Jesus, tired from the journey, sat down by the well around noon. ",
-									         NewLine,
-									         "A Samaritan lady came for water and Jesus said to her, “Will you give me a drink?” ",
-									         "(His disciples had gone into the town to buy food.) ",
-									         NewLine,
-									         kJohn4V9BeforeQuote + kJohn4V9Quote + kJohn4V9AfterQuote))
+											 "Now Jesus learned that the Pharisees knew he was baptizing more disciples than John— ",
+											 "although in fact it was not Jesus who baptized, but his disciples. ",
+											 "So he left Judea and went back once more to Galilee. ",
+											 NewLine,
+											 "Now he had to go through Samaria. ",
+											 "They came to a town near the ground Jacob had given to Joseph. ",
+											 "Jesus, tired from the journey, sat down by the well around noon. ",
+											 NewLine,
+											 "A Samaritan lady came for water and Jesus said to her, “Will you give me a drink?” ",
+											 "(His disciples had gone into the town to buy food.) ",
+											 NewLine,
+											 kJohn4V9BeforeQuote + kJohn4V9Quote + kJohn4V9AfterQuote))
 									yield return tok;
 								break;
 							default:
@@ -673,6 +752,71 @@ namespace SIL.Chono
 						break;
 					default:
 						yield break;
+				}
+			}
+
+			/// <summary>
+			/// Gets the specified USFM in a form that is easier to parse.
+			/// </summary>
+			/// <param name="usfm">The USFM fragment to convert. This can be a whole book or down to a small piece of a verse</param>
+			/// <param name="contextBookNum">The book number representing the context of where the USFM occurs. This is used
+			/// if the specified USFM does not start with a \id marker.</param>
+			/// <param name="contextChapterNum">The chapter number representing the context of where the USFM occurs.
+			/// This is used if the specified USFM does not start with a \c marker.</param>
+			/// <param name="contextVerseNum">The verse number representing the context of where the USFM occurs.
+			/// This is used if the specified USFM does not start with a \v marker.</param>
+			public IEnumerable<IUSFMToken> ConvertToUSFMTokens(string usfm, int contextBookNum, 
+				int contextChapterNum, int contextVerseNum)
+			{
+				TestTokenBase lastToken = null;
+				var regex = new Regex(@"\\(?<marker>\w+) ((?<number>\d+) )?(?<text>[^\\]*)");
+
+				TestVerse GetVerse() =>
+					new TestVerse(contextBookNum, contextChapterNum, contextVerseNum);
+
+				foreach (Match match in regex.Matches(usfm))
+				{
+					string text = null;
+					var marker = match.Groups["marker"].Value;
+					switch (marker)
+					{
+						case "id":
+							var bookId = match.Groups["text"].Value;
+							Assert.That(bookId.Length == 3);
+							contextBookNum = BCVRef.BookToNumber(bookId);
+							contextChapterNum = 1;
+							contextVerseNum = 0;
+							lastToken = new TestMarkerToken(GetVerse(), marker, bookId);
+							yield return lastToken;
+							break;
+						case "c":
+							var chapterData = match.Groups["number"].Value;
+							contextChapterNum = int.Parse(chapterData);
+							contextVerseNum = 0;
+							lastToken = new TestMarkerToken(GetVerse(), marker, chapterData,
+								lastToken?.EndVerseOffset ?? 0);
+							yield return lastToken;
+							break;
+						case "v":
+							var verseData = match.Groups["number"].Value;
+							contextVerseNum = int.Parse(verseData);
+							lastToken = new TestMarkerToken(GetVerse(), marker, verseData);
+							yield return lastToken;
+							text = match.Groups["text"].Value;
+							break;
+						default:
+							lastToken = new TestMarkerToken(lastToken, marker);
+							yield return lastToken;
+							text = match.Groups["text"].Value;
+							break;
+					}
+
+					if (!string.IsNullOrEmpty(text))
+					{
+						lastToken = new TestTextToken(lastToken.VerseRef, text,
+							lastToken.EndVerseOffset, lastToken.IsScripture);
+						yield return lastToken;
+					}
 				}
 			}
 
@@ -733,8 +877,8 @@ namespace SIL.Chono
 					}
 
 					tok = new TestMarkerToken(
-						outputVerseToken? verse.GetPreviousVerse(null) : verse, 
-						marker, offset:tok?.EndVerseOffset ?? startingOffset);
+						outputVerseToken ? verse.GetPreviousVerse(null) : verse,
+						marker, offset: tok?.EndVerseOffset ?? startingOffset);
 					yield return tok;
 
 					if (outputVerseToken)
@@ -821,7 +965,27 @@ namespace SIL.Chono
 
 			public string ConvertToUSFMString(IReadOnlyList<IUSFMToken> tokens)
 			{
-				throw new NotImplementedException();
+				var sb = new StringBuilder();
+				foreach (var token in tokens)
+				{
+					if (token is IUSFMMarkerToken markerTok)
+					{
+						sb.Append(@"\");
+						sb.Append(markerTok.Marker);
+						sb.Append(" ");
+						if (!string.IsNullOrEmpty(markerTok.Data))
+						{
+							sb.Append(markerTok.Data);
+							sb.Append(" ");
+						}
+					}
+					else if (token is IUSFMTextToken textTok)
+					{
+						sb.Append(textTok.Text);
+					}
+				}
+
+				return sb.ToString();
 			}
 
 			public bool CanEdit(IPluginObject obj, DataType dataType = DataType.PluginData)
@@ -908,6 +1072,7 @@ namespace SIL.Chono
 			var project = new TestProject(quoteInfo);
 			var sut = new AnnotationSource(null, project);
 			var verse = new TestVerse(43, 4, 9);
+			CallGetAnnotationsForVersesBefore(verse, sut, 0);
 			SanityCheckUSFMs(project, verse);
 			var annotation = sut.GetAnnotations(verse, @"\v 9 " +
 				TestProject.kJohn4V9BeforeQuote + TestProject.kJohn4V9Quote +
@@ -917,6 +1082,10 @@ namespace SIL.Chono
 			Assert.That(annotation.ScriptureSelection.SelectedText, 
 				Is.EqualTo(TestProject.kJohn4V9Quote));
 			VerifyPluginAnnotation(annotation, project, verse);
+		}
+
+		private void CallGetAnnotationsForVersesBefore(TestVerse verse, AnnotationSource annotationSource, int i)
+		{
 		}
 
 		[TestCase(1)]
@@ -931,7 +1100,7 @@ namespace SIL.Chono
 			SanityCheckUSFMs(project, verse);
 			var annotations = sut.GetAnnotations(verse, @"\v 5 " +
 				TestProject.kJer1V5Line1 + @"\q " + TestProject.kJer1V5Line2 +
-				@"\q " + TestProject.kJer1V5Line3);
+				@"\q " + TestProject.kJer1V5Line3 + " ");
 			Assert.That(annotations.Count, Is.EqualTo(3));
 			
 			Assert.That(annotations[0].ScriptureSelection.SelectedText, 
@@ -946,6 +1115,20 @@ namespace SIL.Chono
 				Assert.That(annotation.StyleName, Is.EqualTo("quote1"));
 				VerifyPluginAnnotation(annotation, project, verse);
 			}
+		}
+
+		[TestCase(1)]
+		[TestCase(2)]
+		public void GetAnnotations_EditedUsfmNoQuotes_ReturnsNoAnnotations(
+			int quoteLevels)
+		{
+			var quoteInfo = GetQuoteInfo(quoteLevels, Continuers.RepeatAllOpeners);
+			var project = new TestProject(quoteInfo);
+			var sut = new AnnotationSource(null, project);
+			var verse = new TestVerse(24, 1, 5);
+			SanityCheckUSFMs(project, verse);
+			var annotations = sut.GetAnnotations(verse, @"\v 5 I totally know you.");
+			Assert.That(annotations.Count, Is.EqualTo(0));
 		}
 
 		[Test]
@@ -1010,13 +1193,101 @@ namespace SIL.Chono
 			foreach (var annotation in annotations)
 				VerifyPluginAnnotation(annotation, project, verse);
 		}
-
+		
+		[TestCase(2, Continuers.RepeatAllOpeners)]
 		[TestCase(3, Continuers.RepeatAllOpeners)]
+		[TestCase(2, Continuers.RepeatAllClosers)]
 		[TestCase(3, Continuers.RepeatAllClosers)]
+		[TestCase(2, Continuers.DifferentPunct)]
 		[TestCase(3, Continuers.DifferentPunct)]
+		[TestCase(2, Continuers.None)]
 		[TestCase(3, Continuers.None)]
-		public void GetAnnotations_ThreePrimaryQuoteLevelsDefined_ReturnsLevel2And3Annotations(
+		public void GetAnnotations_CloserAddedToEndOfPrecedingVerse_ReturnsNoAnnotations(
 			int quoteLevels, Continuers continuers)
+		{
+			var sut = DoSetupForUneditedJeremiah1V8(quoteLevels, continuers, out var quoteInfo,
+				out var verse8Usfm);
+
+			// This call to GetAnnotations for verse 7 passes in an edited version that
+			// has the first-level quote closed at the end of the verse.
+			var editedJer1V7Lev1QuotePart2 = TestProject.kJer1V7Lev1QuotePart2.TrimEnd() +
+				quoteInfo.PrimaryLevels[0].Closer;
+			var annotations = sut.GetAnnotations(new TestVerse(24, 1, 7),
+				@"\v 7 " + TestProject.kJer1V7BeforeQuote + TestProject.kJer1V7Lev1QuotePart1 +
+				TestProject.kJer1V7Lev2Quote + editedJer1V7Lev1QuotePart2 + " ");
+			Assert.That(annotations.Last().ScriptureSelection.SelectedText,
+				Is.EqualTo(editedJer1V7Lev1QuotePart2));
+
+			// Now when we get the annotations for verse 8 (which was not edited), we should get
+			// no annotations because the previous verse closed the quote.
+			annotations = sut.GetAnnotations(new TestVerse(24, 1, 8), verse8Usfm);
+
+			Assert.That(annotations.Count, Is.EqualTo(0));
+		}
+
+		[TestCase(Continuers.RepeatAllOpeners)]
+		[TestCase(Continuers.RepeatAllClosers)]
+		[TestCase(Continuers.DifferentPunct)]
+		[TestCase(Continuers.None)]
+		public void GetAnnotations_VerseAddedAfterLastVerse_ReturnsAnnotationsForNewVerse(
+			Continuers continuers)
+		{
+			var sut = DoSetupForUneditedJeremiah1V8(2, continuers, out var quoteInfo, out var _);
+
+			var verse = new TestVerse(24, 1, 9);
+			// As the user starts to edit, we should initially get no annotations,
+			// but when they open a new quote, then we should get an annotation for it.
+			var annotations = sut.GetAnnotations(verse, @"\v 9 ");
+			Assert.That(annotations.Count, Is.EqualTo(0));
+			annotations = sut.GetAnnotations(verse, @"\v 9 ");
+			Assert.That(annotations.Count, Is.EqualTo(0));
+			const string v9TextBeforeQuote = @"\v 9 Then the Lord touched me and said, ";
+			annotations = sut.GetAnnotations(verse, v9TextBeforeQuote);
+			Assert.That(annotations.Count, Is.EqualTo(0));
+			var quoteInV9 =  quoteInfo.PrimaryLevels[0].Opener + "Behold, I";
+			annotations = sut.GetAnnotations(verse, v9TextBeforeQuote + quoteInV9);
+			Assert.That(annotations.Single().ScriptureSelection.SelectedText,
+				Is.EqualTo(quoteInV9));
+			quoteInV9 = quoteInfo.PrimaryLevels[0].Opener + "Behold, I have put words in your" +
+				" mouth." + quoteInfo.PrimaryLevels[0].Closer;
+			annotations = sut.GetAnnotations(verse, v9TextBeforeQuote + quoteInV9);
+			Assert.That(annotations.Single().ScriptureSelection.SelectedText,
+				Is.EqualTo(quoteInV9));
+		}
+
+		[TestCase(Continuers.RepeatAllOpeners)]
+		[TestCase(Continuers.RepeatAllClosers)]
+		[TestCase(Continuers.DifferentPunct)]
+		[TestCase(Continuers.None)]
+		public void GetAnnotations_ChapterAddedAfterLastChapter_ReturnsNoAnnotationsForNewVerse0(
+			Continuers continuers)
+		{
+			var quoteInfo = GetQuoteInfo(2, continuers);
+			var project = new TestProject(quoteInfo);
+			var sut = new AnnotationSource(null, project);
+			var verse = new TestVerse(24, 2, 0);
+			var annotations = sut.GetAnnotations(verse, @"\c 2 ");
+			Assert.That(annotations.Count, Is.EqualTo(0));
+			annotations = sut.GetAnnotations(verse, @"\c 2 \s ");
+			Assert.That(annotations.Count, Is.EqualTo(0));
+			annotations = sut.GetAnnotations(verse, @"\c 2 \s The thing ");
+			Assert.That(annotations.Count, Is.EqualTo(0));
+			var quoteInSectHead =  quoteInfo.PrimaryLevels[0].Opener + "I ";
+			annotations = sut.GetAnnotations(verse, @"\c 2 \s The thing " + quoteInSectHead);
+			Assert.That(annotations.Single().ScriptureSelection.SelectedText,
+				Is.EqualTo(quoteInSectHead));
+		}
+
+		[TestCase(3, Continuers.RepeatAllOpeners, false)]
+		[TestCase(3, Continuers.RepeatAllClosers, false)]
+		[TestCase(3, Continuers.DifferentPunct, false)]
+		[TestCase(3, Continuers.None, false)]
+		[TestCase(3, Continuers.RepeatAllOpeners, true)]
+		[TestCase(3, Continuers.RepeatAllClosers, true)]
+		[TestCase(3, Continuers.DifferentPunct, true)]
+		[TestCase(3, Continuers.None, true)]
+		public void GetAnnotations_ThreePrimaryQuoteLevelsDefined_ReturnsLevel2And3Annotations(
+			int quoteLevels, Continuers continuers, bool editedPoetryLevels)
 		{
 			var quoteInfo = GetQuoteInfo(quoteLevels, continuers);
 			var project = new TestProject(quoteInfo);
@@ -1027,8 +1298,9 @@ namespace SIL.Chono
 			var line1Text = project.GetCont(1) + TestProject.kMat22V44Line1SansLev1Cont;
 			var line2Text = project.GetCont(2) + TestProject.kMat22V44Line2SansLev12Cont;
 			var line3Text = project.GetCont(3) + TestProject.kMat22V44Line3SansConts;
-			var annotations = sut.GetAnnotations(verse, @"\v 44 " + @"\q1 " + line1Text +
-				@"\q2 " + line2Text + @"\q2 " + line3Text + TestProject.kMat22V44Line3AfterQuote);
+			var annotations = sut.GetAnnotations(verse, @"\v 44 " + line1Text +
+				(editedPoetryLevels ? @"\q1 " : @"\q2 ") + line2Text + @"\q2 " +
+				line3Text + TestProject.kMat22V44Line3AfterQuote);
 
 			Assert.That(annotations.Count, Is.EqualTo(4 + kNumberOfAnnotationsForAVerseNumber));
 			if (kNumberOfAnnotationsForAVerseNumber > 0)
@@ -1126,8 +1398,46 @@ namespace SIL.Chono
 			var project = new TestProject(quoteInfo);
 			var sut = new AnnotationSource(null, project);
 
-			var annotationBefore = sut.GetAnnotations(new TestVerse(40, 5, 4),
-				@"\v 4 " + quoteInfo.PrimaryLevels[0].Continuer + TestProject.kMat5V4Text).Last();
+			var verse = new TestVerse(40, 7, 23);
+			var annotations = sut.GetAnnotations(verse,
+				@"\v 23 " + TestProject.kMat7V23 +
+				@"\s " + TestProject.kMat7SectHead24To27);
+
+			foreach (var annotation in annotations)
+				VerifyPluginAnnotation(annotation, project, verse);
+
+			var annotationBefore = annotations[annotations.Count - 2];
+
+			var sectHeadAnnotation = annotations.Last();
+
+			Assert.That(annotationBefore.StyleName, Is.Not.EqualTo(sectHeadAnnotation.StyleName));
+
+			Assert.That(sectHeadAnnotation.ScriptureSelection.SelectedText,
+				Is.EqualTo(TestProject.kMat7SectHead24To27Quote));
+
+			VerifyPluginAnnotation(sectHeadAnnotation, project, verse);
+			Assert.That(sectHeadAnnotation.StyleName,
+				Is.EqualTo(AnnotationSource.kNonScrQuoteStylePrefix + "1"));
+
+			var annotationAfter = sut.GetAnnotations(new TestVerse(40, 7, 24),
+				@"\v 24 " + quoteInfo.PrimaryLevels[0].Continuer +
+				TestProject.kMat7V24SansCont).First();
+
+			Assert.That(annotationBefore.StyleName, Is.EqualTo(annotationAfter.StyleName));
+		}
+		
+		[Test]
+		public void GetAnnotations_SectionHeadWithQuoteLeftOpenInMiddleOfQuote_SectionHeadQuoteAnnotatedSeparately()
+		{
+			var quoteInfo = GetQuoteInfo(3, Continuers.RepeatAllOpeners);
+			var project = new TestProject(quoteInfo);
+			var sut = new AnnotationSource(null, project);
+
+			var annotationBefore = sut.GetAnnotations(new TestVerse(40, 5, 33),
+				@"\v 33 " + TestProject.kMat5V33P1 + @"\p " +
+				project.GetCont(2) +
+				TestProject.kMat5V33P2Level2QuoteSansCont + 
+				TestProject.kMat5V33P2Level1Quote).Last();
 
 			var verse = new TestVerse(40, 6, 0);
 			var annotation = sut.GetAnnotations(verse,
@@ -1149,27 +1459,22 @@ namespace SIL.Chono
 			Assert.That(annotationBefore.StyleName, Is.EqualTo(annotationAfter.StyleName));
 		}
 		
-		[Test]
-		public void GetAnnotations_SectionHeadWithQuoteLeftOpenInMiddleOfQuote_SectionHeadNotAnnotated()
-		{
-			var quoteInfo = GetQuoteInfo(3, Continuers.RepeatAllOpeners);
-			var project = new TestProject(quoteInfo);
-			var sut = new AnnotationSource(null, project);
-			Assert.Ignore("Write this test");
-		}
-
-		[TestCase(Continuers.RepeatAllOpeners)]
-		[TestCase(Continuers.RepeatAllClosers)]
-		[TestCase(Continuers.None)]
+		[TestCase(Continuers.RepeatAllOpeners, false)]
+		[TestCase(Continuers.RepeatAllClosers, false)]
+		[TestCase(Continuers.None, false)]
+		[TestCase(Continuers.RepeatAllOpeners, true)]
+		[TestCase(Continuers.RepeatAllClosers, true)]
+		[TestCase(Continuers.None, true)]
 		public void GetAnnotations_Lev1ContinuerAtStartOfVerse_ReturnsAnnotationsForContPara(
-			Continuers continuers)
+			Continuers continuers, bool editedToRemoveFinalParaBreak)
 		{
-			var quoteInfo = GetQuoteInfo(1, continuers);
+			var quoteInfo = GetQuoteInfo(2, continuers);
 			var project = new TestProject(quoteInfo);
 			var sut = new AnnotationSource(null, project);
 			var verse = new TestVerse(40, 5, 4);
 			var annotations = sut.GetAnnotations(verse,
-				@"\v 4 " + quoteInfo.PrimaryLevels[0].Continuer + TestProject.kMat5V4Text);
+				@"\v 4 " + project.GetCont(1) + TestProject.kMat5V4Text +
+				(editedToRemoveFinalParaBreak ? "" : @"\p "));
 
 			Assert.That(annotations.Count, Is.EqualTo(1 + kNumberOfAnnotationsForAVerseNumber));
 			if (kNumberOfAnnotationsForAVerseNumber > 0)
@@ -1207,10 +1512,44 @@ namespace SIL.Chono
 		public void GetAnnotations_Lev2Continuer_ReturnsAnnotationsForContPara(
 			Continuers continuers)
 		{
-			var quoteInfo = GetQuoteInfo(2, continuers);
+			var quoteInfo = GetQuoteInfo(3, continuers);
 			var project = new TestProject(quoteInfo);
 			var sut = new AnnotationSource(null, project);
-			Assert.Ignore("Write this test");
+			var verse = new TestVerse(40, 5, 33);
+			var p2Level2Text = project.GetCont(2) + TestProject.kMat5V33P2Level2QuoteSansCont;
+			var annotations = sut.GetAnnotations(verse,
+				@"\v 33 " + TestProject.kMat5V33P1 + @"\p " + p2Level2Text +
+				TestProject.kMat5V33P2Level1Quote);
+
+			Assert.That(annotations.Count, Is.EqualTo(6 + kNumberOfAnnotationsForAVerseNumber));
+			if (kNumberOfAnnotationsForAVerseNumber > 0)
+			{
+				Assert.That(annotations[0].ScriptureSelection.SelectedText,
+					Is.EqualTo(@"\v 33 "));
+			}
+
+			var i = kNumberOfAnnotationsForAVerseNumber;
+			Assert.That(annotations[i].ScriptureSelection.SelectedText,
+				Is.EqualTo(TestProject.kMat5V33P1Level1Quote));
+			Assert.That(annotations[i].StyleName, Is.EqualTo("quote1"));
+			Assert.That(annotations[++i].ScriptureSelection.SelectedText,
+				Is.EqualTo(TestProject.kMat5V33P1Level2Quote));
+			Assert.That(annotations[i].StyleName, Is.EqualTo("quote2"));
+			Assert.That(annotations[++i].ScriptureSelection.SelectedText,
+				Is.EqualTo(TestProject.kMat5V33P1Level3Quote));
+			Assert.That(annotations[i].StyleName, Is.EqualTo("quote3"));
+			Assert.That(annotations[++i].ScriptureSelection.SelectedText,
+				Is.EqualTo(" "));
+			Assert.That(annotations[i].StyleName, Is.EqualTo("quote2"));
+			Assert.That(annotations[++i].ScriptureSelection.SelectedText,
+				Is.EqualTo(p2Level2Text));
+			Assert.That(annotations[i].StyleName, Is.EqualTo("quote2"));
+			Assert.That(annotations[++i].ScriptureSelection.SelectedText,
+				Is.EqualTo(TestProject.kMat5V33P2Level1Quote));
+			Assert.That(annotations[i].StyleName, Is.EqualTo("quote1"));
+
+			foreach (var annotation in annotations)
+				VerifyPluginAnnotation(annotation, project, verse);
 		}
 
 		[TestCase(Continuers.RepeatAllOpeners)]
@@ -1353,6 +1692,26 @@ namespace SIL.Chono
 				Assert.That(newEndOffset, Is.GreaterThan(expectedOffset));
 				expectedOffset = newEndOffset;
 			}
+		}
+
+		/// <summary>
+		/// This creates the annotation source and issues a first call to GetAnnotations to get the
+		/// annotations based on the original unedited text.
+		/// </summary>
+		private AnnotationSource DoSetupForUneditedJeremiah1V8(int quoteLevels, Continuers continuers,
+			out TestQuotationMarkInfo quoteInfo, out string verse8Usfm)
+		{
+			quoteInfo = GetQuoteInfo(quoteLevels, continuers);
+			var project = new TestProject(quoteInfo);
+			var sut = new AnnotationSource(null, project);
+			var verse = new TestVerse(24, 1, 8);
+			SanityCheckUSFMs(project, verse);
+			verse8Usfm = @"\v 8 " + TestProject.kJer1V8Lev1Quote +
+				TestProject.kJer1V8AfterQuote;
+			var annotations = sut.GetAnnotations(verse, verse8Usfm);
+
+			Assert.That(annotations.Count, Is.EqualTo(1 + kNumberOfAnnotationsForAVerseNumber));
+			return sut;
 		}
 
 		private static void VerifyPluginAnnotation(IPluginAnnotation annotation, IProject project,
