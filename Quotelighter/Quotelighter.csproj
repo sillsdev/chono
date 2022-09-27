@@ -459,6 +459,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AnnotationSource.cs" />
+    <Compile Include="ApostropheAnalyzer.cs" />
     <Compile Include="MatchExtensions.cs" />
     <Compile Include="MoreUiLanguagesDlg.cs">
       <SubType>Form</SubType>

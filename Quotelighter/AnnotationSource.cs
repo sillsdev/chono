@@ -67,17 +67,19 @@ namespace SIL.Quotelighter
 
         private readonly IPluginHost m_host;
         private readonly IProject m_project;
+        private readonly ApostropheAnalyzer m_apostropheAnalyzer;
         private readonly HashSet<char> m_allQuoteChars;
 	    private readonly Regex m_findMarksRegex;
 	    private int m_currentBook = -1;
         private readonly Dictionary<int, ChapterAnnotationInfo> m_currentBookAnnotations =
 	        new Dictionary<int, ChapterAnnotationInfo>();
 
-        public AnnotationSource(IPluginHost host, IProject project)
+        public AnnotationSource(IPluginHost host, IProject project, ApostropheAnalyzer apostropheAnalyzer = null)
         {
 	        m_host = host;
 	        m_project = project;
-            project.ProjectDataChanged += ProjectDataChanged;
+	        m_apostropheAnalyzer = apostropheAnalyzer;
+	        project.ProjectDataChanged += ProjectDataChanged;
             project.ScriptureDataChanged += ScriptureDataChanged;
             var quotationMarks = project.Language.QuotationMarkInfo;
             if (quotationMarks?.PrimaryLevels == null)
@@ -85,14 +87,29 @@ namespace SIL.Quotelighter
 
             var allMarks = new Dictionary<string, int>();
 
-            StringBuilder bldr = new StringBuilder();
+            var bldr = new StringBuilder();
             int currentLevelInBuilder = -1;
+
+			string EscapeAndAvoidWordMedialApostropheMatching(string mark)
+			{
+				if (mark == "’")
+				{
+					if (m_apostropheAnalyzer == null ||
+					    m_apostropheAnalyzer.TreatSingleClosingCurlyQuoteAsApostrophe == ApostropheAnalyzer.SpecialTreatmentRule.Never)
+					{
+						return mark;
+					}
+					return @"(?<!\p{L}|\p{M})’|’(?!\p{L}|\p{M})";
+				}
+
+				return Regex.Escape(mark);
+			}
 
             void AppendQuotationMark(string mark)
             {
 	            if (mark.Length > 1)
 		            bldr.Append("(");
-	            bldr.Append(Regex.Escape(mark));
+	            bldr.Append(EscapeAndAvoidWordMedialApostropheMatching(mark));
 	            if (mark.Length > 1)
 		            bldr.Append(")");
             }
@@ -120,8 +137,6 @@ namespace SIL.Quotelighter
             {
                 IQuotationMarkLevel lev = quotationMarks.PrimaryLevels[level];
                 int i;
-
-				// TODO: Deal with apostrophe's (the same way Paratext does)...
 
                 if (allMarks.TryGetValue(lev.Opener, out i))
                     Insert(i, level, lev.Opener);
@@ -178,7 +193,7 @@ namespace SIL.Quotelighter
 		                bldr.Append(">");
 	                }
 	                bldr.Append("(^");
-	                bldr.Append(Regex.Escape(lev.Continuer));
+	                bldr.Append(EscapeAndAvoidWordMedialApostropheMatching(lev.Continuer));
 	                bldr.Append("))");
                 }
             }
@@ -419,6 +434,12 @@ namespace SIL.Quotelighter
 
 	                foreach (Match match in m_findMarksRegex.Matches(text))
 	                {
+						if (m_apostropheAnalyzer != null && match.Value == "’" &&
+						    m_apostropheAnalyzer.IsApostrophe(text, match.Index))
+						{
+							continue;
+						}
+
 		                // We skip the first one, which is always "0".
 		                foreach (var matchGroup in match.SuccessfulMatchGroups().Skip(1))
 		                {
